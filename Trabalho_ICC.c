@@ -2,7 +2,7 @@
 #include<stlib.h>
 
 
-void le_parametros(int *erro,int *refinamento,char **arquivo_entrada,char **arquivo_saida){
+void le_parametros(int *erro,unsigned int *refinamento,char **arquivo_entrada,char **arquivo_saida){
     int i;
     for(i=0;i<argc;i++){//if com as condiçoes do parametro
         if(argv[i]=="-e")
@@ -26,11 +26,6 @@ void le_parametros(int *erro,int *refinamento,char **arquivo_entrada,char **arqu
 
 }
 
-while (fbggf)
-{
-    sdfsdfsdf
-}
-
 
 void le_matriz(char *arquivo_entrada){
     
@@ -39,10 +34,36 @@ void le_matriz(char *arquivo_entrada){
 
 }
 
+void le_matriz(char *arquivo_entrada){
+
+
+
+
+}
+
+void le_matriz_terminal(){
+	int tamMatriz;
+	char *elementosLinhaMatriz;
+	printf("Digite o tamanho da matriz, lembre-se que a matriz tem tamanho NxN");
+	scanf("%d",&tamMatriz);
+	int matriz[tamMatriz][tamMatriz];
+	int i,j;
+	for(i=0;i<tamMatriz;i++){
+		scanf("%s",&elementosLinhaMatriz);
+		while()//depois de ler a linha, ler os numeros dela e converte-la para double
+		for(j=0;j<tamMatriz;j++){
+
+		}
+
+	}
+
+
+}
+
 
 int main(int argc, char *argv[]){
     int erro;
-    int refinamento;
+    unsigned int refinamento;
     char *arquivo_entrada=NULL;
     char *arquivo_saida=NULL;
         
@@ -50,6 +71,10 @@ int main(int argc, char *argv[]){
     if(*arquivo_entrada!=NULL){
         le_matriz(*arquivo_entrada);
     }
+    else{
+
+    }
+    
     resolve_matriz();
 
 

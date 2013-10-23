@@ -31,13 +31,25 @@
 /**
  * le
  */
-void le_matrizTerminal(int tamMatriz,double **matriz){
-	int i,j;
+void le_matrizTerminal(FILE *arq,double **matriz){
+	int i,j,tamMatriz;
+	FILE *le;
+
+	if(arq==NULL){
+		le = stdin;
+		fscanf(le,"%d",&tamMatriz);
+	}
+	else{
+		le = arq;
+		fscanf(le,"%d",&tamMatriz);
+	}
 	*matriz = malloc((sizeof(double *))*tamMatriz);
 	for(i=0;i<tamMatriz;i++){
 		matriz[i] = malloc((sizeof(double))*tamMatriz);
-		for(j=0;j<tamMatriz;j++)
-			fscanf(stdin,"%lf",&matriz[i][j]);
+		for(j=0;j<tamMatriz;j++){
+			fscanf(le,"%lf",&matriz[i][j]);
+			printf("%lf\n",matriz[i][j]);
+		}
 	}
 }
 
@@ -55,6 +67,7 @@ int main(int argc, char *argv[]){
     char *arquivo_saida=NULL;
     double **matriz;
     matriz = malloc(sizeof(double **));
+    FILE *arq=NULL;
         
 //    le_parametros(erro,refinamento,&arquivo_entrada,&arquivo_saida);
 //    if(*arquivo_entrada!=NULL){
@@ -65,7 +78,7 @@ int main(int argc, char *argv[]){
 //    }
 //
 //    resolve_matriz();
-    le_matrizTerminal(3,matriz);
+    le_matrizTerminal(arq,matriz);
 
 
 

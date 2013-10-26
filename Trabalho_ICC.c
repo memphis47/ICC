@@ -4,32 +4,34 @@
 
 
 
-void le_parametros(int argc, char *argv[],int *erro,unsigned int *refinamento,char *arquivo_entrada,char *arquivo_saida){
+int le_parametros(int argc, char *argv[],int *erro,unsigned int *refinamento,char *arquivo_entrada,char *arquivo_saida){
     int i;
     for(i=0;i<argc;i++){//if com as condicoes do parametro
-        if(argv[i]=="-e")
+        if(strcmp(argv[i],"-e")==0)
             *erro=*argv[i+1];
-        else if(argv[i]=="-r")
+        else if(strcmp(argv[i],"-r")==0)
             *refinamento=*argv[i+1];   
-        else if(argv[i]=="-i")
+        else if(strcmp(argv[i],"-i")==0)
             *arquivo_entrada=*argv[i+1];
-        else if(argv[i]=="-o")
+        else if(strcmp(argv[i],"-o")==0)
             *arquivo_saida=*argv[i+1];
-        else if(argv[i]=="-h" && argc==2)
-            printf( "Definicao dos Parametros do Trabalho de ICC :\n"
-                    "-e erro:\n parametro opcional no qual 0 < erro < 1 eh o erro maximo aceitavel para a norma L^2. O valor padrao para este parametro deve ser erro=0.0001.\n"
-                    "-r ref:\n parametro opcional no qual 0 <= ref < 32768 eh o numero maximo de iteracoes a serem executadas no refinamento da solucao. O valor padrao para este parametro deve ser ref=0.\n"
-                    "-i arquivo_entrada:\n parametro opcional no qual arquivo_entrada eh o caminho completo para o arquivo contendo a matriz a ser invertida. Em caso de ausencia do parametro, a entrada deve ser lida de stdin.\n"
-                    "-o arquivo_saida:\n parametro opcional no qual arquivo_saida eh o caminho completo para o arquivo que vai conter a matriz inversa. Em caso de ausencia do parametro, a saida deve ser impressa em stdout.\n"
-                    "-h help:\n Mostra as definicoes dos argumentos\n");
+        else if((strcmp(argv[i],"-h")==0) && argc==2){
+            printf( "\n\nDefinicao dos Parametros do Trabalho de ICC :\n"
+                    "\n-e erro:\n\tParametro opcional no qual 0 < erro < 1 eh o erro maximo aceitavel para a norma L^2. O valor padrao para este parametro deve ser erro=0.0001.\n"
+                    "\n-r ref:\n\tParametro opcional no qual 0 <= ref < 32768 eh o numero maximo de iteracoes a serem executadas no refinamento da solucao. O valor padrao para este parametro deve ser ref=0.\n"
+                    "\n-i arquivo_entrada:\n\tParametro opcional no qual arquivo_entrada eh o caminho completo para o arquivo contendo a matriz a ser invertida. Em caso de ausencia do parametro, a entrada deve ser lida de stdin.\n"
+                    "\n-o arquivo_saida:\n\tParametro opcional no qual arquivo_saida eh o caminho completo para o arquivo que vai conter a matriz inversa. Em caso de ausencia do parametro, a saida deve ser impressa em stdout.\n"
+                    "\n-h help:\n\tMostra as definicoes dos argumentos\n\n");
+        	return(0);
+        }
     }
-    
+    return(1);
 
 
 }
 
 /**
- * le
+ * le a matriz tanto pelo Terminal quanto por arquivo
  */
 void le_matriz(FILE *arq,double **matriz){
 	int i,j,tamMatriz;
@@ -54,18 +56,26 @@ void le_matriz(FILE *arq,double **matriz){
 }
 
 
+int resolve_matriz(double **matriz,int erro, unsigned int refinamento){
+	
+}
+
 int main(int argc, char *argv[]){
-    int erro;
+    int erro,saidaArq;
     unsigned int refinamento;
     char *arquivo_entrada=NULL;
     char *arquivo_saida=NULL;
     double **matriz;
     matriz = malloc(sizeof(double **));
     FILE *arq=NULL;
-    le_parametros(argc,argv,&erro,&refinamento,arquivo_entrada,arquivo_saida);
-//    le_matriz(arq,matriz);
-//    resolve_matriz();
-    
+    saidaArq=le_parametros(argc,argv,&erro,&refinamento,arquivo_entrada,arquivo_saida);
+    if(saidaArq!=0){
+    	if(arquivo_entrada!=NULL){
+    		arq=fopen(arquivo_entrada,"r");
+    	}
+    	le_matriz(arq,matriz);
+    	resolve_matriz(matriz,erro,refinamento);
+    }
 
 
 

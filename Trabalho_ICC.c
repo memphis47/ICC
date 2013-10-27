@@ -51,7 +51,6 @@ int le_matriz(FILE *arq,double **matriz){
 		matriz[i] = malloc((sizeof(double))*tamMatriz);
 		for(j=0;j<tamMatriz;j++){
 			fscanf(le,"%lf",&matriz[i][j]);
-			printf("%lf\n",matriz[i][j]);
 		}
 	}
 	return tamMatriz;
@@ -88,22 +87,41 @@ void imprime_matriz(double **matriz,int tamMatriz){
 	}
 }
 
+void zeraColuna(double **matriz,int linZerada,int i,int tamMatriz){
+	int col;
+	double pivo;
+	pivo=matriz[linZerada][i]/matriz[i][i];
+	matriz[linZerada][i]=pivo;
+	for(col=i+1;col<tamMatriz;col++){
+		matriz[linZerada][col]=matriz[linZerada][col]-(pivo*matriz[i][col]);
+	}
+}
 
 void pivoteamento(double **matriz,int i, int tamMatriz){
 	int novaLinha;
-	
+	int lin;
 	novaLinha=procuraMaior(matriz,i,tamMatriz);
 	if(novaLinha>=0)
 		trocaLinhas(matriz,i,novaLinha,tamMatriz);
-	zeraColuna(matriz);
+	imprime_matriz(matriz,tamMatriz);
+	printf("\n");
+	for(lin=i+1;lin<tamMatriz;lin++)
+		zeraColuna(matriz,lin,i,tamMatriz);
+	imprime_matriz(matriz,tamMatriz);
+	printf("\n");
 	
 }
 
 int resolve_matriz(double **matriz,int tamMatriz,int erro, unsigned int refinamento){
 	int i;
-	for(i=0;i<tamMatriz;i++)
+	imprime_matriz(matriz,tamMatriz);
+	printf("\n");
+	for(i=0;i<tamMatriz;i++){
 		pivoteamento(matriz,i,tamMatriz);
-	
+		imprime_matriz(matriz,tamMatriz);
+		printf("\n");
+	}
+	imprime_matriz(matriz,tamMatriz);
 }
 
 int main(int argc, char *argv[]){

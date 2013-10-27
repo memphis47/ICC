@@ -61,12 +61,12 @@ int le_matriz(FILE *arq,double **matriz){
 /**
  * procura o maior elemento pertencente a coluna i nas linhas abaixo da linha atual
  */
-int procuraMaior(double **matriz,int i, int tamMatriz){
+int procuraMaior(double **matriz,int vetorLinha[],int i, int tamMatriz){
 	int lin,maiorLin=-1;
-	double maiorAux=matriz[i][i];// o primeiro maior elemento sera o da linha atual para efeito de comparações
+	double maiorAux=matriz[vetorLinha[i]][i];// o primeiro maior elemento sera o da linha atual para efeito de comparações
 	for(lin=i+1;lin<tamMatriz;lin++){
-		if(matriz[lin][i]>maiorAux){ 
-			maiorAux=matriz[lin][i];
+		if(matriz[vetorLinha[lin]][i]>maiorAux){ 
+			maiorAux=matriz[vetorLinha[lin]][i];
 			maiorLin=lin;
 		}
 	}
@@ -76,24 +76,21 @@ int procuraMaior(double **matriz,int i, int tamMatriz){
 /**
  *  troca as linhas da matriz, ou seja troca de posição os elementos entre as duas linhas
  */
-void trocaLinhas (double **matriz, int linhaOri, int linhaDest, int tamMatriz){
-	double aux;
-	int i;
-	for(i=0;i<tamMatriz;i++){
-		aux = matriz[linhaDest][i];
-		matriz[linhaDest][i] = matriz[linhaOri][i];
-		matriz[linhaOri][i] = aux;
-	}
+void trocaLinhas (int *vetorLinha, int linhaOri, int linhaDest, int tamMatriz){
+	int aux;
+	aux=vetorLinha[linhaOri];
+	vetorLinha[linhaOri]=vetorLinha[linhaDest];
+	vetorLinha[linhaDest]=aux;
 }
 
 /**
  *  funcao para imprimir a matriz
  */
-void imprime_matriz(double **matriz,int tamMatriz){
+void imprime_matriz(double **matriz,int vetorLinha[],int tamMatriz){
 	int i,j;
 	for(i=0;i<tamMatriz;i++){
 		for(j=0;j<tamMatriz;j++)
-			printf("\t%lf ", matriz[i][j]);
+			printf("\t%lf ", matriz[vetorLinha[i]][j]);
 		printf("\n");
 	}
 }
@@ -102,13 +99,13 @@ void imprime_matriz(double **matriz,int tamMatriz){
 /**
  *  Zera a coluna da das linhas abaixo da linha atual passada no parametro i
  */
-void zeraColuna(double **matriz,int linZerada,int i,int tamMatriz){
+void zeraColuna(double **matriz,int vetorLinha[],int linZerada,int i,int tamMatriz){
 	int col;
 	double pivo;
-	pivo=matriz[linZerada][i]/matriz[i][i]; // acha o pivo da matriz, ous eja o termo que sera usado para zerar a linha abaixo da linha atual
-	matriz[linZerada][i]=pivo; //para evitar que a criação de uma nova matriz esse pivo sera guardado no lugar do elemento que seria zerado
+	pivo=matriz[vetorLinha[linZerada]][i]/matriz[vetorLinha[i]][i]; // acha o pivo da matriz, ous eja o termo que sera usado para zerar a linha abaixo da linha atual
+	matriz[vetorLinha[linZerada]][i]=pivo; //para evitar que a criação de uma nova matriz esse pivo sera guardado no lugar do elemento que seria zerado
 	for(col=i+1;col<tamMatriz;col++){
-		matriz[linZerada][col]=matriz[linZerada][col]-(pivo*matriz[i][col]); // usa o pivo para ajustar a linha que esta sendo modificada
+		matriz[vetorLinha[linZerada]][col]=matriz[vetorLinha[linZerada]][col]-(pivo*matriz[vetorLinha[i]][col]); // usa o pivo para ajustar a linha que esta sendo modificada
 	}
 }
 
@@ -116,19 +113,25 @@ void zeraColuna(double **matriz,int linZerada,int i,int tamMatriz){
  * chama a funcao para achar o maior elemento das colunas, caso exista esse elemento
  * faz a troca de linha entre os dois, se nao deixa as linhas como estao
  */
-void pivoteamento(double **matriz,int i, int tamMatriz){
+void pivoteamento(double **matriz,int vetorLinha[],int i, int tamMatriz){
 	int novaLinha;
 	int lin;
-	novaLinha=procuraMaior(matriz,i,tamMatriz); // procura o maior elemento dentro da coluna
+	novaLinha=procuraMaior(matriz,vetorLinha,i,tamMatriz); // procura o maior elemento dentro da coluna
 	if(novaLinha>=0)
-		trocaLinhas(matriz,i,novaLinha,tamMatriz); // caso exista esse elemento troca a linha atual com a linha do novo elemento
-	imprime_matriz(matriz,tamMatriz);
-	printf("\n");
-	for(lin=i+1;lin<tamMatriz;lin++)
-		zeraColuna(matriz,lin,i,tamMatriz); // zera a coluna abaixo da linha atual, seguindo o metodo de Gauss
-	imprime_matriz(matriz,tamMatriz);
-	printf("\n");
+		trocaLinhas(vetorLinha,i,novaLinha,tamMatriz); // caso exista esse elemento troca a linha atual com a linha do novo elemento
 	
+	for(lin=i+1;lin<tamMatriz;lin++)
+		zeraColuna(matriz,vetorLinha,lin,i,tamMatriz); // zera a coluna abaixo da linha atual, seguindo o metodo de Gauss
+	
+	
+}
+
+
+//cria um vetor linha para o 
+void criaVetorLinha(int *vetorLinha,int tamMatriz){
+	int i;
+	for(i=0;i<tamMatriz;i++)
+		vetorLinha[i]=i;
 }
 
 /**
@@ -137,14 +140,18 @@ void pivoteamento(double **matriz,int i, int tamMatriz){
  */
 int resolve_matriz(double **matriz,int tamMatriz,int erro, unsigned int refinamento){
 	int i;
-	imprime_matriz(matriz,tamMatriz);
+	int vetorLinha[tamMatriz];
+	criaVetorLinha(vetorLinha,tamMatriz);
+	imprime_matriz(matriz,vetorLinha,tamMatriz);
 	printf("\n");
-	for(i=0;i<tamMatriz;i++){
-		pivoteamento(matriz,i,tamMatriz); // pivoteia as linhas da matriz para zerar as colunas
-		imprime_matriz(matriz,tamMatriz);
+	for(i=0;i<tamMatriz-1;i++){
+		imprime_matriz(matriz,vetorLinha,tamMatriz);
+		printf("\n");
+		pivoteamento(matriz,vetorLinha,i,tamMatriz); // pivoteia as linhas da matriz para zerar as colunas
+		imprime_matriz(matriz,vetorLinha,tamMatriz);
 		printf("\n");
 	}
-	imprime_matriz(matriz,tamMatriz);
+	imprime_matriz(matriz,vetorLinha,tamMatriz);
 }
 
 int main(int argc, char *argv[]){

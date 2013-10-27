@@ -57,11 +57,44 @@ int le_matriz(FILE *arq,double **matriz){
 	return tamMatriz;
 }
 
-void pivoteamento(double **matriz,int i){
+int procuraMaior(double **matriz,int i, int tamMatriz){
+	int lin,maiorLin=-1;
+	double maiorAux=matriz[i][i];
+	for(lin=i+1;lin<tamMatriz;lin++){
+		if(matriz[lin][i]>maiorAux){
+			maiorAux=matriz[lin][i];
+			maiorLin=lin;
+		}
+	}
+	return maiorLin;
+}
+
+void trocaLinhas (double **matriz, int linhaOri, int linhaDest, int tamMatriz){
+	double aux;
+	int i;
+	for(i=0;i<tamMatriz;i++){
+		aux = matriz[linhaDest][i];
+		matriz[linhaDest][i] = matriz[linhaOri][i];
+		matriz[linhaOri][i] = aux;
+	}
+}
+
+void imprime_matriz(double **matriz,int tamMatriz){
+	int i,j;
+	for(i=0;i<tamMatriz;i++){
+		for(j=0;j<tamMatriz;j++)
+			printf("\t%lf ", matriz[i][j]);
+		printf("\n");
+	}
+}
+
+
+void pivoteamento(double **matriz,int i, int tamMatriz){
 	int novaLinha;
 	
-	novaLinha=procuraMaior(matriz[i][i]);
-	trocaLinha(matriz,novaLinha);
+	novaLinha=procuraMaior(matriz,i,tamMatriz);
+	if(novaLinha>=0)
+		trocaLinhas(matriz,i,novaLinha,tamMatriz);
 	zeraColuna(matriz);
 	
 }
@@ -69,7 +102,7 @@ void pivoteamento(double **matriz,int i){
 int resolve_matriz(double **matriz,int tamMatriz,int erro, unsigned int refinamento){
 	int i;
 	for(i=0;i<tamMatriz;i++)
-		pivoteamento(matriz,i);
+		pivoteamento(matriz,i,tamMatriz);
 	
 }
 

@@ -34,7 +34,7 @@ int le_parametros(int argc, char *argv[],double *erro,unsigned int *refinamento,
 /**
  * le a matriz tanto pelo Terminal quanto por arquivo
  */
-void le_matriz(FILE *arq,double **matriz){
+int le_matriz(FILE *arq,double **matriz){
 	int i,j,tamMatriz;
 	FILE *le;
 
@@ -54,15 +54,18 @@ void le_matriz(FILE *arq,double **matriz){
 			printf("%lf\n",matriz[i][j]);
 		}
 	}
+	return tamMatriz;
 }
 
 
 int resolve_matriz(double **matriz,int erro, unsigned int refinamento){
+	for(i=0;i<)
+	pivoteamento(matriz,i);
 	
 }
 
 int main(int argc, char *argv[]){
-    int saidaArq;
+    int saidaArq,tamMatriz;
     double erro=0.0001;
     unsigned int refinamento=0;
     char *arquivo_entrada=NULL;
@@ -71,14 +74,13 @@ int main(int argc, char *argv[]){
     matriz = malloc(sizeof(double **));
     FILE *arq=NULL;
     saidaArq=le_parametros(argc,argv,&erro,&refinamento,arquivo_entrada,arquivo_saida);
-    printf("%lf\n%d\n",erro,refinamento);
-    /*if(saidaArq!=0){
+    if(saidaArq!=0){
     	if(arquivo_entrada!=NULL){
     		arq=fopen(arquivo_entrada,"r");
     	}
-    	le_matriz(arq,matriz);
-    	resolve_matriz(matriz,erro,refinamento);
-    }*/
+    	tamMatriz=le_matriz(arq,matriz);
+    	resolve_matriz(matriz,tamMatriz,erro,refinamento);
+    }
 
 
 

@@ -40,6 +40,7 @@ void criaVetorLinha(tipo_matriz* mat,int tamMatriz){
         mat->vetorLinha = (int*)malloc (sizeof(int)*tamMatriz);
         for(i=0;i<tamMatriz;i++)
                mat->vetorLinha[i]=i;
+
 }
 
 void criaMatriz(tipo_matriz *mat,int tamMatriz){
@@ -50,6 +51,41 @@ void criaMatriz(tipo_matriz *mat,int tamMatriz){
         mat->matriz[i] = malloc((sizeof(double))*tamMatriz); // aloca as colunas da mat
 	}
 }
+
+void fatoracaoLU(tipo_matriz *mat,double *resultado,int tamMatriz){
+	int i,j,k,soma;
+	double iden;
+	tipo_matriz* matrizX = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+	criaMatriz(matrizX,tamMatriz);
+	printf("%lf\t", resultado[0]);
+	for(i=0;i<tamMatriz;i++){
+		iden[i]=0.0;
+	}
+	for(k=0;k<tamMatriz;k++){
+		iden[k]=1;
+		resultado[0]=iden[0];
+		for(i=1;i<tamMatriz;i++){
+			soma=0;
+			for(j=0;j<i;j++){
+				soma=soma+resultado[j]*(mat->matriz[i][j]);
+			}
+			resultado[i]=iden[i]-soma;
+		}
+		matrizX->matriz[tamMatriz-(k+1)][tamMatriz-(k+1)]=resultado[i]/mat->matriz[tamMatriz-1][tamMatriz-1]
+		for(i=tamMatriz-2;i<0;i--){
+			soma=0;
+			for(j=tamMatriz-1;j<i;j--){
+				soma=soma+matrizX->matriz[i][j]*(mat->matriz[i][j]);
+			}
+			matrizX->matriz[i][j-1]=resultado[i]/soma;
+		}
+		iden[k]=0;
+	}
+	
+	
+	
+}
+
 
 /**
  * le a mat usando arq como parametro para saber se existe um arquivo para ler
@@ -184,6 +220,7 @@ int main(int argc, char *argv[]){
     char *arquivo_saida=NULL;
     tipo_matriz* matrizLU = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a mat
     tipo_matriz* matrizA = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a mat
+    double *vetorDahora = (double*)malloc (sizeof(double)*tamMatriz);
     FILE *arq=NULL;
     saidaArq=le_parametros(argc,argv,&erro,&refinamento,arquivo_entrada,arquivo_saida); // verfica os valores passados por parametro
     if(saidaArq!=0){
@@ -191,13 +228,15 @@ int main(int argc, char *argv[]){
                     arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
             }
             tamMatriz=le_mat(arq,matrizA); //le a mat, seja pelo terminal , ou por um arquivo texto
-            criaMatriz (matrizLU,tamMatriz);
+            fatoracaoLU(matrizA,vetorDahora,tamMatriz);
+
+            /*criaMatriz (matrizLU,tamMatriz);
             copiaMatriz(matrizA, matrizLU,tamMatriz);
 			printf("\nImprimindo Matriz LU:\n");
             imprime_mat(matrizLU,tamMatriz);
             printf("\n");
             resolve_mat(matrizLU,tamMatriz,erro,refinamento); // resolve a mat por gauss
-            printf("\nImprimindo Matriz A:\n");
+            printf("\nImprimindo Matriz A:\n");*/
             imprime_mat(matrizA,tamMatriz);
     }
 

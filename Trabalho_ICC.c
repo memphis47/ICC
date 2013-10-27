@@ -57,10 +57,19 @@ int le_matriz(FILE *arq,double **matriz){
 	return tamMatriz;
 }
 
+void pivoteamento(double **matriz,int i){
+	int novaLinha;
+	
+	novaLinha=procuraMaior(matriz[i][i]);
+	trocaLinha(matriz,novaLinha);
+	zeraColuna(matriz);
+	
+}
 
-int resolve_matriz(double **matriz,int erro, unsigned int refinamento){
-	for(i=0;i<)
-	pivoteamento(matriz,i);
+int resolve_matriz(double **matriz,int tamMatriz,int erro, unsigned int refinamento){
+	int i;
+	for(i=0;i<tamMatriz;i++)
+		pivoteamento(matriz,i);
 	
 }
 

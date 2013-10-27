@@ -4,13 +4,14 @@
 
 
 
-int le_parametros(int argc, char *argv[],int *erro,unsigned int *refinamento,char *arquivo_entrada,char *arquivo_saida){
+int le_parametros(int argc, char *argv[],double *erro,unsigned int *refinamento,char *arquivo_entrada,char *arquivo_saida){
     int i;
+    char *end;
     for(i=0;i<argc;i++){//if com as condicoes do parametro
         if(strcmp(argv[i],"-e")==0)
-            *erro=*argv[i+1];
+            *erro=strtod(argv[i+1],&end);
         else if(strcmp(argv[i],"-r")==0)
-            *refinamento=*argv[i+1];   
+            *refinamento=atoi(argv[i+1]);   
         else if(strcmp(argv[i],"-i")==0)
             *arquivo_entrada=*argv[i+1];
         else if(strcmp(argv[i],"-o")==0)
@@ -61,21 +62,23 @@ int resolve_matriz(double **matriz,int erro, unsigned int refinamento){
 }
 
 int main(int argc, char *argv[]){
-    int erro,saidaArq;
-    unsigned int refinamento;
+    int saidaArq;
+    double erro=0.0001;
+    unsigned int refinamento=0;
     char *arquivo_entrada=NULL;
     char *arquivo_saida=NULL;
     double **matriz;
     matriz = malloc(sizeof(double **));
     FILE *arq=NULL;
     saidaArq=le_parametros(argc,argv,&erro,&refinamento,arquivo_entrada,arquivo_saida);
-    if(saidaArq!=0){
+    printf("%lf\n%d\n",erro,refinamento);
+    /*if(saidaArq!=0){
     	if(arquivo_entrada!=NULL){
     		arq=fopen(arquivo_entrada,"r");
     	}
     	le_matriz(arq,matriz);
     	resolve_matriz(matriz,erro,refinamento);
-    }
+    }*/
 
 
 

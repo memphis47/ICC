@@ -52,37 +52,54 @@ void criaMatriz(tipo_matriz *mat,int tamMatriz){
 	}
 }
 
+/**
+ *  funcao para imprimir a mat
+ */
+void imprime_mat(tipo_matriz* mat,int tamMatriz){
+        int i,j;
+        for(i=0;i<tamMatriz;i++){
+                for(j=0;j<tamMatriz;j++)
+                        printf("\t%lf ", mat->matriz[mat->vetorLinha[i]][j]);
+                printf("\n");
+        }
+}
+
 void fatoracaoLU(tipo_matriz *mat,double *resultado,int tamMatriz){
-	int i,j,k,soma;
-	double iden;
+	int i,j,k;
+	double soma;
+	double *iden;
+	iden=(double*)malloc (sizeof(double)*tamMatriz);
 	tipo_matriz* matrizX = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 	criaMatriz(matrizX,tamMatriz);
-	printf("%lf\t", resultado[0]);
 	for(i=0;i<tamMatriz;i++){
 		iden[i]=0.0;
 	}
 	for(k=0;k<tamMatriz;k++){
-		iden[k]=1;
+		iden[k]=1.0;
 		resultado[0]=iden[0];
+		printf("%lf\n", resultado[0]);
 		for(i=1;i<tamMatriz;i++){
 			soma=0;
 			for(j=0;j<i;j++){
 				soma=soma+resultado[j]*(mat->matriz[i][j]);
 			}
 			resultado[i]=iden[i]-soma;
+			printf("%lf\n", resultado[i]);
 		}
-		matrizX->matriz[tamMatriz-(k+1)][tamMatriz-(k+1)]=resultado[i]/mat->matriz[tamMatriz-1][tamMatriz-1]
-		for(i=tamMatriz-2;i<0;i--){
+		printf("--------------\n");
+		matrizX->matriz[tamMatriz-1][k]=resultado[i-1]/mat->matriz[tamMatriz-1][tamMatriz-1];
+		printf("%lf\n",matrizX->matriz[tamMatriz-1][k]);
+		for(i=tamMatriz-2;i>0;i--){
 			soma=0;
-			for(j=tamMatriz-1;j<i;j--){
+			for(j=tamMatriz-1;j>i;j--){
 				soma=soma+matrizX->matriz[i][j]*(mat->matriz[i][j]);
 			}
 			matrizX->matriz[i][j-1]=resultado[i]/soma;
 		}
 		iden[k]=0;
 	}
-	
-	
+	imprime_mat(matrizX,tamMatriz);
+	printf("\n");
 	
 }
 
@@ -137,17 +154,7 @@ void trocaLinhas (tipo_matriz *mat, int linhaOri, int linhaDest, int tamMatriz){
         mat->vetorLinha[linhaDest]=aux;
 }
 
-/**
- *  funcao para imprimir a mat
- */
-void imprime_mat(tipo_matriz* mat,int tamMatriz){
-        int i,j;
-        for(i=0;i<tamMatriz;i++){
-                for(j=0;j<tamMatriz;j++)
-                        printf("\t%lf ", mat->matriz[mat->vetorLinha[i]][j]);
-                printf("\n");
-        }
-}
+
 
 
 /**
@@ -170,10 +177,10 @@ void zeraColuna(tipo_matriz* mat,int linZerada,int i,int tamMatriz){
 void pivoteamento(tipo_matriz* mat,int i, int tamMatriz){
         int novaLinha;
         int lin;
-        novaLinha=procuraMaior(mat,i,tamMatriz); // procura o maior elemento dentro da coluna
+        /*novaLinha=procuraMaior(mat,i,tamMatriz); // procura o maior elemento dentro da coluna
         if(novaLinha>=0)
                 trocaLinhas(mat,i,novaLinha,tamMatriz); // caso exista esse elemento troca a linha atual com a linha do novo elemento
-        
+        */
         for(lin=i+1;lin<tamMatriz;lin++)
                 zeraColuna(mat,lin,i,tamMatriz); // zera a coluna abaixo da linha atual, seguindo o metodo de Gauss
         
@@ -200,8 +207,6 @@ void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,int tamMatriz){
 int resolve_mat(tipo_matriz* mat,int tamMatriz,int erro, unsigned int refinamento){
         int i;
         int vetorLinha[tamMatriz];
-        imprime_mat(mat,tamMatriz);
-        printf("\n");
         for(i=0;i<tamMatriz-1;i++){
                 imprime_mat(mat,tamMatriz);
                 printf("\n");
@@ -209,7 +214,6 @@ int resolve_mat(tipo_matriz* mat,int tamMatriz,int erro, unsigned int refinament
                 imprime_mat(mat,tamMatriz);
                 printf("\n");
         }
-        imprime_mat(mat,tamMatriz);
 }
 
 int main(int argc, char *argv[]){
@@ -228,15 +232,15 @@ int main(int argc, char *argv[]){
                     arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
             }
             tamMatriz=le_mat(arq,matrizA); //le a mat, seja pelo terminal , ou por um arquivo texto
-            fatoracaoLU(matrizA,vetorDahora,tamMatriz);
-
-            /*criaMatriz (matrizLU,tamMatriz);
+            
+            criaMatriz (matrizLU,tamMatriz);
             copiaMatriz(matrizA, matrizLU,tamMatriz);
 			printf("\nImprimindo Matriz LU:\n");
             imprime_mat(matrizLU,tamMatriz);
             printf("\n");
             resolve_mat(matrizLU,tamMatriz,erro,refinamento); // resolve a mat por gauss
-            printf("\nImprimindo Matriz A:\n");*/
+            fatoracaoLU(matrizLU,vetorDahora,tamMatriz);
+            printf("\nImprimindo Matriz A:\n");
             imprime_mat(matrizA,tamMatriz);
     }
 

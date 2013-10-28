@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+typedef struct tipo_matriz{
+	double **matriz;
+	int *vetorLinha;
+}tipo_matriz;
 
 int le_parametros(int argc, char *argv[],double *erro,unsigned int *refinamento,char *arquivo_entrada,char *arquivo_saida){
     int i;
@@ -20,10 +23,10 @@ int le_parametros(int argc, char *argv[],double *erro,unsigned int *refinamento,
             printf( "\n\nDefinicao dos Parametros do Trabalho de ICC :\n"
                     "\n-e erro:\n\tParametro opcional no qual 0 < erro < 1 eh o erro maximo aceitavel para a norma L^2. O valor padrao para este parametro deve ser erro=0.0001.\n"
                     "\n-r ref:\n\tParametro opcional no qual 0 <= ref < 32768 eh o numero maximo de iteracoes a serem executadas no refinamento da solucao. O valor padrao para este parametro deve ser ref=0.\n"
-                    "\n-i arquivo_entrada:\n\tParametro opcional no qual arquivo_entrada eh o caminho completo para o arquivo contendo a matriz a ser invertida. Em caso de ausencia do parametro, a entrada deve ser lida de stdin.\n"
-                    "\n-o arquivo_saida:\n\tParametro opcional no qual arquivo_saida eh o caminho completo para o arquivo que vai conter a matriz inversa. Em caso de ausencia do parametro, a saida deve ser impressa em stdout.\n"
+                    "\n-i arquivo_entrada:\n\tParametro opcional no qual arquivo_entrada eh o caminho completo para o arquivo contendo a mat a ser invertida. Em caso de ausencia do parametro, a entrada deve ser lida de stdin.\n"
+                    "\n-o arquivo_saida:\n\tParametro opcional no qual arquivo_saida eh o caminho completo para o arquivo que vai conter a mat inversa. Em caso de ausencia do parametro, a saida deve ser impressa em stdout.\n"
                     "\n-h help:\n\tMostra as definicoes dos argumentos\n\n");
-        	return(0);
+                return(0);
         }
     }
     return(1);
@@ -31,127 +34,146 @@ int le_parametros(int argc, char *argv[],double *erro,unsigned int *refinamento,
 
 }
 
-/**
- * le a matriz usando arq como parametro para saber se existe um arquivo para ler
- * ou se sera usado o terminal para a leitura da matriz
- */
-int le_matriz(FILE *arq,double **matriz){
-	int i,j,tamMatriz;
-	FILE *le;
+//cria um vetor linha para o 
+void criaVetorLinha(tipo_matriz* mat,int tamMatriz){
+        int i;
+        mat->vetorLinha = (int*)malloc (sizeof(int)*tamMatriz);
+        for(i=0;i<tamMatriz;i++)
+               mat->vetorLinha[i]=i;
+}
 
-	if(arq==NULL){ // caso não exista o arquivo de entrada, a ordem da matriz sera lida pelo terminal
-		le = stdin;
-		fscanf(le,"%d",&tamMatriz);
+void criaMatriz(tipo_matriz *mat,int tamMatriz){
+	int i;
+	(mat->matriz) = malloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
+    criaVetorLinha(mat,tamMatriz);
+    for(i=0;i<tamMatriz;i++){
+        mat->matriz[i] = malloc((sizeof(double))*tamMatriz); // aloca as colunas da mat
 	}
-	else{ // caso exista o arquivo de entrada, a ordem da matriz sera lido da primeira linha do arquivo
-		le = arq;
-		fscanf(le,"%d",&tamMatriz);
-	}
-	*matriz = malloc((sizeof(double *))*tamMatriz); // aloca a matriz no tamanho passado para a ordem
-	for(i=0;i<tamMatriz;i++){
-		matriz[i] = malloc((sizeof(double))*tamMatriz); // aloca as colunas da matriz
-		for(j=0;j<tamMatriz;j++){
-			fscanf(le,"%lf",&matriz[i][j]); // le tanto do arquivo quanto do terminal a matriz
-		}
-	}
-	return tamMatriz;
+}
+
+/**
+ * le a mat usando arq como parametro para saber se existe um arquivo para ler
+ * ou se sera usado o terminal para a leitura da mat
+ */
+int le_mat(FILE *arq,tipo_matriz* mat){
+        int i,j,tamMatriz;
+        FILE *le;
+        if(arq==NULL){ // caso não exista o arquivo de entrada, a ordem da mat sera lida pelo terminal
+                le = stdin;
+                fscanf(le,"%d",&tamMatriz);
+        }
+        else{ // caso exista o arquivo de entrada, a ordem da mat sera lido da primeira linha do arquivo
+                le = arq;
+                fscanf(le,"%d",&tamMatriz);
+        }
+        criaMatriz(mat,tamMatriz);
+        for(i=0;i<tamMatriz;i++){
+                for(j=0;j<tamMatriz;j++){
+                        fscanf(le,"%lf",&mat->matriz[i][j]); // le tanto do arquivo quanto do terminal a mat
+                }
+        }
+        return tamMatriz;
 }
 
 
 /**
  * procura o maior elemento pertencente a coluna i nas linhas abaixo da linha atual
  */
-int procuraMaior(double **matriz,int vetorLinha[],int i, int tamMatriz){
-	int lin,maiorLin=-1;
-	double maiorAux=matriz[vetorLinha[i]][i];// o primeiro maior elemento sera o da linha atual para efeito de comparações
-	for(lin=i+1;lin<tamMatriz;lin++){
-		if(matriz[vetorLinha[lin]][i]>maiorAux){ 
-			maiorAux=matriz[vetorLinha[lin]][i];
-			maiorLin=lin;
-		}
-	}
-	return maiorLin; // retorna a linha que esta esse elemento
+int procuraMaior(tipo_matriz* mat,int i, int tamMatriz){
+        int lin,maiorLin=-1;
+        double maiorAux=mat->matriz[mat->vetorLinha[i]][i];// o primeiro maior elemento sera o da linha atual para efeito de comparações
+        for(lin=i+1;lin<tamMatriz;lin++){
+                if(mat->matriz[mat->vetorLinha[lin]][i]>maiorAux){ 
+                        maiorAux=mat->matriz[mat->vetorLinha[lin]][i];
+                        maiorLin=lin;
+                }
+        }
+        return maiorLin; // retorna a linha que esta esse elemento
 }
 
 /**
- *  troca as linhas da matriz, ou seja troca de posição os elementos entre as duas linhas
+ *  troca as linhas da mat, ou seja troca de posição os elementos entre as duas linhas
  */
-void trocaLinhas (int *vetorLinha, int linhaOri, int linhaDest, int tamMatriz){
-	int aux;
-	aux=vetorLinha[linhaOri];
-	vetorLinha[linhaOri]=vetorLinha[linhaDest];
-	vetorLinha[linhaDest]=aux;
+void trocaLinhas (tipo_matriz *mat, int linhaOri, int linhaDest, int tamMatriz){
+        int aux;
+        aux=mat->vetorLinha[linhaOri];
+        mat->vetorLinha[linhaOri]=mat->vetorLinha[linhaDest];
+        mat->vetorLinha[linhaDest]=aux;
 }
 
 /**
- *  funcao para imprimir a matriz
+ *  funcao para imprimir a mat
  */
-void imprime_matriz(double **matriz,int vetorLinha[],int tamMatriz){
-	int i,j;
-	for(i=0;i<tamMatriz;i++){
-		for(j=0;j<tamMatriz;j++)
-			printf("\t%lf ", matriz[vetorLinha[i]][j]);
-		printf("\n");
-	}
+void imprime_mat(tipo_matriz* mat,int tamMatriz){
+        int i,j;
+        for(i=0;i<tamMatriz;i++){
+                for(j=0;j<tamMatriz;j++)
+                        printf("\t%lf ", mat->matriz[mat->vetorLinha[i]][j]);
+                printf("\n");
+        }
 }
 
 
 /**
  *  Zera a coluna da das linhas abaixo da linha atual passada no parametro i
  */
-void zeraColuna(double **matriz,int vetorLinha[],int linZerada,int i,int tamMatriz){
-	int col;
-	double pivo;
-	pivo=matriz[vetorLinha[linZerada]][i]/matriz[vetorLinha[i]][i]; // acha o pivo da matriz, ous eja o termo que sera usado para zerar a linha abaixo da linha atual
-	matriz[vetorLinha[linZerada]][i]=pivo; //para evitar que a criação de uma nova matriz esse pivo sera guardado no lugar do elemento que seria zerado
-	for(col=i+1;col<tamMatriz;col++){
-		matriz[vetorLinha[linZerada]][col]=matriz[vetorLinha[linZerada]][col]-(pivo*matriz[vetorLinha[i]][col]); // usa o pivo para ajustar a linha que esta sendo modificada
-	}
+void zeraColuna(tipo_matriz* mat,int linZerada,int i,int tamMatriz){
+        int col;
+        double pivo;
+        pivo=mat->matriz[mat->vetorLinha[linZerada]][i]/mat->matriz[mat->vetorLinha[i]][i]; // acha o pivo da mat, ous eja o termo que sera usado para zerar a linha abaixo da linha atual
+        mat->matriz[mat->vetorLinha[linZerada]][i]=pivo; //para evitar que a criação de uma nova mat esse pivo sera guardado no lugar do elemento que seria zerado
+        for(col=i+1;col<tamMatriz;col++){
+                mat->matriz[mat->vetorLinha[linZerada]][col]=mat->matriz[mat->vetorLinha[linZerada]][col]-(pivo*mat->matriz[mat->vetorLinha[i]][col]); // usa o pivo para ajustar a linha que esta sendo modificada
+        }
 }
 
 /**
  * chama a funcao para achar o maior elemento das colunas, caso exista esse elemento
  * faz a troca de linha entre os dois, se nao deixa as linhas como estao
  */
-void pivoteamento(double **matriz,int vetorLinha[],int i, int tamMatriz){
-	int novaLinha;
-	int lin;
-	novaLinha=procuraMaior(matriz,vetorLinha,i,tamMatriz); // procura o maior elemento dentro da coluna
-	if(novaLinha>=0)
-		trocaLinhas(vetorLinha,i,novaLinha,tamMatriz); // caso exista esse elemento troca a linha atual com a linha do novo elemento
-	
-	for(lin=i+1;lin<tamMatriz;lin++)
-		zeraColuna(matriz,vetorLinha,lin,i,tamMatriz); // zera a coluna abaixo da linha atual, seguindo o metodo de Gauss
-	
-	
+void pivoteamento(tipo_matriz* mat,int i, int tamMatriz){
+        int novaLinha;
+        int lin;
+        novaLinha=procuraMaior(mat,i,tamMatriz); // procura o maior elemento dentro da coluna
+        if(novaLinha>=0)
+                trocaLinhas(mat,i,novaLinha,tamMatriz); // caso exista esse elemento troca a linha atual com a linha do novo elemento
+        
+        for(lin=i+1;lin<tamMatriz;lin++)
+                zeraColuna(mat,lin,i,tamMatriz); // zera a coluna abaixo da linha atual, seguindo o metodo de Gauss
+        
+        
 }
 
 
-//cria um vetor linha para o 
-void criaVetorLinha(int *vetorLinha,int tamMatriz){
-	int i;
-	for(i=0;i<tamMatriz;i++)
-		vetorLinha[i]=i;
+
+void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,int tamMatriz){
+	int i,j;
+	for(i=0;i<tamMatriz;i++){
+		for(j=0;j<tamMatriz;j++){
+			mat2->matriz[i][j]=mat1->matriz[i][j];
+		}
+	}
+	
+	
 }
 
 /**
- * Chama as funcoes necessarias para resolver a matriz por gauss
+ * Chama as funcoes necessarias para resolver a mat por gauss
  * 
  */
-int resolve_matriz(double **matriz,int tamMatriz,int erro, unsigned int refinamento){
-	int i;
-	int vetorLinha[tamMatriz];
-	criaVetorLinha(vetorLinha,tamMatriz);
-	imprime_matriz(matriz,vetorLinha,tamMatriz);
-	printf("\n");
-	for(i=0;i<tamMatriz-1;i++){
-		imprime_matriz(matriz,vetorLinha,tamMatriz);
-		printf("\n");
-		pivoteamento(matriz,vetorLinha,i,tamMatriz); // pivoteia as linhas da matriz para zerar as colunas
-		imprime_matriz(matriz,vetorLinha,tamMatriz);
-		printf("\n");
-	}
-	imprime_matriz(matriz,vetorLinha,tamMatriz);
+int resolve_mat(tipo_matriz* mat,int tamMatriz,int erro, unsigned int refinamento){
+        int i;
+        int vetorLinha[tamMatriz];
+        imprime_mat(mat,tamMatriz);
+        printf("\n");
+        for(i=0;i<tamMatriz-1;i++){
+                imprime_mat(mat,tamMatriz);
+                printf("\n");
+                pivoteamento(mat,i,tamMatriz); // pivoteia as linhas da mat para zerar as colunas
+                imprime_mat(mat,tamMatriz);
+                printf("\n");
+        }
+        imprime_mat(mat,tamMatriz);
 }
 
 int main(int argc, char *argv[]){
@@ -160,19 +182,23 @@ int main(int argc, char *argv[]){
     unsigned int refinamento=0; // valor padrão definido pelo professor
     char *arquivo_entrada=NULL;
     char *arquivo_saida=NULL;
-    double **matriz;
-    matriz = malloc(sizeof(double **));// aloca a matriz
+    tipo_matriz* matrizLU = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a mat
+    tipo_matriz* matrizA = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a mat
     FILE *arq=NULL;
     saidaArq=le_parametros(argc,argv,&erro,&refinamento,arquivo_entrada,arquivo_saida); // verfica os valores passados por parametro
     if(saidaArq!=0){
-    	if(arquivo_entrada!=NULL){
-    		arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a matriz
-    	}
-    	tamMatriz=le_matriz(arq,matriz); //le a matriz, seja pelo terminal , ou por um arquivo texto
-    	resolve_matriz(matriz,tamMatriz,erro,refinamento); // resolve a matriz por gauss
+            if(arquivo_entrada!=NULL){
+                    arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
+            }
+            tamMatriz=le_mat(arq,matrizA); //le a mat, seja pelo terminal , ou por um arquivo texto
+            criaMatriz (matrizLU,tamMatriz);
+            copiaMatriz(matrizA, matrizLU,tamMatriz);
+			printf("\nImprimindo Matriz LU:\n");
+            imprime_mat(matrizLU,tamMatriz);
+            printf("\n");
+            resolve_mat(matrizLU,tamMatriz,erro,refinamento); // resolve a mat por gauss
+            printf("\nImprimindo Matriz A:\n");
+            imprime_mat(matrizA,tamMatriz);
     }
 
-
-
 }
-

@@ -86,7 +86,6 @@ void fatoracaoLU(tipo_matriz *mat,double *resultado,int tamMatriz){
 			for(j=0;j<i;j++){
 				soma=soma+resultado[j]*(mat->matriz[mat->vetorLinha[i]][j]);
 			}
-			printf("Identidade=%lf\n", iden[mat->vetorLinha[i]]);
 			resultado[i]=iden[mat->vetorLinha[i]]-soma;
 		}
 
@@ -96,22 +95,25 @@ void fatoracaoLU(tipo_matriz *mat,double *resultado,int tamMatriz){
 			printf("Z%d:=%lf\n",i,resultado[i]);
 
 
-		matrizX->matriz[mat->vetorLinha[tamMatriz-1]][k]=resultado[i-1]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
-		printf("Resultado da divisão do ultimo elemento=%lf\n\n",matrizX->matriz[mat->vetorLinha[tamMatriz-1]][k]);
+		matrizX->matriz[tamMatriz-1][k]=resultado[i-1]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
+		printf("Resultado da divisão do ultimo elemento=%lf\n\n",matrizX->matriz[tamMatriz-1][k]);
 		imprime_mat(mat,tamMatriz);
 		printf("\n");
 		for(i=tamMatriz-2;i>=0;i--){
 			soma=0;
 			printf("Z[%d]= %lf\n",i,resultado[i]);
 			for(j=tamMatriz-1;j>i;j--){
-				printf("MatrizX=%lf\n",matrizX->matriz[mat->vetorLinha[i+1]][k]);
-				printf("MatrizLU=%lf\n",mat->matriz[mat->vetorLinha[i]][j]);
-				soma=soma+(matrizX->matriz[mat->vetorLinha[j]][k]*(mat->matriz[mat->vetorLinha[i]][j]));
+				soma=soma+(matrizX->matriz[j][k]*(mat->matriz[mat->vetorLinha[i]][j]));
 
 			}
 			printf("SomaUX= %lf\n\n", soma);
-			matrizX->matriz[mat->vetorLinha[i]][k]=(resultado[i]-soma)/mat->matriz[mat->vetorLinha[i]][j];
+			matrizX->matriz[i][k]=(resultado[i]-soma)/mat->matriz[mat->vetorLinha[i]][j];
 			printf("Resultado da divisão= %lf\n\n", matrizX->matriz[i][k]);
+//			for(i=0;i<tamMatriz;i++){
+//			printf("%lf ",matrizX->matriz[mat->vetorLinha[i]][j]);
+//
+//			}
+			printf("\n");
 		}
 
 		printf("Fatoração LU para k=%d\n",k);

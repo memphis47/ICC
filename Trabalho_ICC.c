@@ -7,18 +7,27 @@ typedef struct tipo_matriz{
 	int *vetorLinha;
 }tipo_matriz;
 
-int le_parametros(int argc, char *argv[],double *erro,unsigned int *refinamento,char *arquivo_entrada,char *arquivo_saida){
+int le_parametros(int argc, char *argv[],double *erro,unsigned int *refinamento,char **arquivo_entrada,char **arquivo_saida){
     int i;
     char *end;
-    for(i=0;i<argc;i++){//if com as condicoes do parametro
-        if(strcmp(argv[i],"-e")==0) 
+    for(i=1;i<argc;i++){//if com as condicoes do parametro
+        if(strcmp(argv[i],"-e")==0)
             *erro=strtod(argv[i+1],&end); //recebe o valor do erro para o cálculo
         else if(strcmp(argv[i],"-r")==0)
-            *refinamento=atoi(argv[i+1]); //recebe o valor do refinamento para o cálculo  
-        else if(strcmp(argv[i],"-i")==0)
-            *arquivo_entrada=*argv[i+1]; //recebe o caminho para o arquivo de entrada
-        else if(strcmp(argv[i],"-o")==0)
-            *arquivo_saida=*argv[i+1]; //recebe o caminho para o arquivo de saida
+            *refinamento=atoi(argv[i+1]); //recebe o valor do refinamento para o cálculo
+        else if(strcmp(argv[i],"-i")==0){
+        	while(*arquivo_entrada==NULL){
+        		*arquivo_entrada = malloc (sizeof(char)*strlen(argv[i+1])+1);
+        	}
+        	printf("copiou1\n");
+        	strcpy(*arquivo_entrada,argv[i+1]);
+        }
+        else if(strcmp(argv[i],"-o")==0){
+        	while(*arquivo_saida==NULL){
+        		*arquivo_saida = malloc (sizeof(char)*strlen(argv[i+1])+1);
+        	}
+        	strcpy(*arquivo_entrada,argv[i+1]); //recebe o caminho para o arquivo de saida
+        }
         else if((strcmp(argv[i],"-h")==0) || argc==2){ //imprime na tela uma explicação dos parametros, caso o usuario tenha digitado o parametro errado ou queira saber atraves do parametro -h quais são os parametros
             printf( "\n\nDefinicao dos Parametros do Trabalho de ICC :\n"
                     "\n-e erro:\n\tParametro opcional no qual 0 < erro < 1 eh o erro maximo aceitavel para a norma L^2. O valor padrao para este parametro deve ser erro=0.0001.\n"
@@ -28,10 +37,9 @@ int le_parametros(int argc, char *argv[],double *erro,unsigned int *refinamento,
                     "\n-h help:\n\tMostra as definicoes dos argumentos\n\n");
                 return(0);
         }
+
     }
     return(1);
-
-
 }
 
 //cria um vetor linha para o 
@@ -52,6 +60,17 @@ void criaMatriz(tipo_matriz *mat,int tamMatriz){
 	}
 }
 
+void multiplicaMatriz(tipo_matriz* matA,tipo_matriz* matB,tipo_matriz* matR,int tamMatriz){
+	int i,j,k;
+	for(i=0;i<tamMatriz;i++){
+		for(j=0;j<tamMatriz;j++){
+			for(k=0;k<tamMatriz;k++){
+				matR->matriz[i][j]+=(matA->matriz[i][k]*matB->matriz[k][j]);
+			}
+		}
+	}
+}
+
 /**
  *  funcao para imprimir a mat
  */
@@ -59,70 +78,53 @@ void imprime_mat(tipo_matriz* mat,int tamMatriz){
         int i,j;
         for(i=0;i<tamMatriz;i++){
                 for(j=0;j<tamMatriz;j++)
-                        printf("\t%lf ", mat->matriz[mat->vetorLinha[i]][j]);
+                	printf("%lf ", mat->matriz[mat->vetorLinha[i]][j]);
                 printf("\n");
         }
 }
 
-void fatoracaoLU(tipo_matriz *mat,double *resultado,int tamMatriz){
+
+//void refinamento(tipo_matriz *mat,){
+//
+//}
+
+
+void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,int tamMatriz){
 	int i,j,k;
 	double soma;
 	double *iden;
 	iden=(double*)malloc (sizeof(double)*tamMatriz);
-	tipo_matriz* matrizX = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-	criaMatriz(matrizX,tamMatriz);
+	tipo_matriz* matrizZ = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+	criaMatriz (matrizZ,tamMatriz);
 	for(i=0;i<tamMatriz;i++){
 		iden[i]=0.0;
 	}
 	for(k=0;k<tamMatriz;k++){
-		printf("k=%d\n",k);
 		iden[k]=1.0;
-		resultado[0]=iden[mat->vetorLinha[0]];
-		for(i=0;i<tamMatriz;i++)
-			printf("[%lf]\n", iden[mat->vetorLinha[i]]);
+		matrizZ->matriz[0][k]=iden[mat->vetorLinha[0]];
 
+		// calcula L
 		for(i=1;i<tamMatriz;i++){
 			soma=0;
 			for(j=0;j<i;j++){
-				soma=soma+resultado[j]*(mat->matriz[mat->vetorLinha[i]][j]);
+				soma=soma+matrizZ->matriz[j][k]*(mat->matriz[mat->vetorLinha[i]][j]);
 			}
-			resultado[i]=iden[mat->vetorLinha[i]]-soma;
+			matrizZ->matriz[i][k]=iden[mat->vetorLinha[i]]-soma;
 		}
 
-		printf("--------------\n");
-
-		for(i=0;i<tamMatriz;i++)
-			printf("Z%d:=%lf\n",i,resultado[i]);
-
-
-		matrizX->matriz[tamMatriz-1][k]=resultado[i-1]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
-		printf("Resultado da divisão do ultimo elemento=%lf\n\n",matrizX->matriz[tamMatriz-1][k]);
-		imprime_mat(mat,tamMatriz);
-		printf("\n");
+		//Calcula U
+		matrizX->matriz[tamMatriz-1][k]=matrizZ->matriz[i-1][k]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
 		for(i=tamMatriz-2;i>=0;i--){
 			soma=0;
-			printf("Z[%d]= %lf\n",i,resultado[i]);
 			for(j=tamMatriz-1;j>i;j--){
 				soma=soma+(matrizX->matriz[j][k]*(mat->matriz[mat->vetorLinha[i]][j]));
 
 			}
-			printf("SomaUX= %lf\n\n", soma);
-			matrizX->matriz[i][k]=(resultado[i]-soma)/mat->matriz[mat->vetorLinha[i]][j];
-			printf("Resultado da divisão= %lf\n\n", matrizX->matriz[i][k]);
-//			for(i=0;i<tamMatriz;i++){
-//			printf("%lf ",matrizX->matriz[mat->vetorLinha[i]][j]);
-//
-//			}
-			printf("\n");
+			matrizX->matriz[i][k]=(matrizZ->matriz[i][k]-soma)/mat->matriz[mat->vetorLinha[i]][j];
 		}
-
-		printf("Fatoração LU para k=%d\n",k);
-		printf("\n");
 		iden[k]=0;
 	}
-	printf("\n");
-	imprime_mat(matrizX,tamMatriz);
-	printf("\n");
+
 	
 }
 
@@ -231,11 +233,7 @@ int resolve_mat(tipo_matriz* mat,int tamMatriz,int erro, unsigned int refinament
         int i;
         int vetorLinha[tamMatriz];
         for(i=0;i<tamMatriz-1;i++){
-                imprime_mat(mat,tamMatriz);
-                printf("\n");
                 pivoteamento(mat,i,tamMatriz); // pivoteia as linhas da mat para zerar as colunas
-                imprime_mat(mat,tamMatriz);
-                printf("\n");
         }
 }
 
@@ -247,9 +245,10 @@ int main(int argc, char *argv[]){
     char *arquivo_saida=NULL;
     tipo_matriz* matrizLU = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a mat
     tipo_matriz* matrizA = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a mat
-    double *vetorDahora = (double*)malloc (sizeof(double)*tamMatriz);
+    tipo_matriz* matrizX = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+    tipo_matriz* matrizR = (tipo_matriz*) malloc(sizeof(tipo_matriz));
     FILE *arq=NULL;
-    saidaArq=le_parametros(argc,argv,&erro,&refinamento,arquivo_entrada,arquivo_saida); // verfica os valores passados por parametro
+    saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verfica os valores passados por parametro
     if(saidaArq!=0){
             if(arquivo_entrada!=NULL){
                     arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
@@ -258,13 +257,13 @@ int main(int argc, char *argv[]){
             
             criaMatriz (matrizLU,tamMatriz);
             copiaMatriz(matrizA, matrizLU,tamMatriz);
-			printf("\nImprimindo Matriz LU:\n");
-            imprime_mat(matrizLU,tamMatriz);
-            printf("\n");
             resolve_mat(matrizLU,tamMatriz,erro,refinamento); // resolve a mat por gauss
-            fatoracaoLU(matrizLU,vetorDahora,tamMatriz);
-            printf("\nImprimindo Matriz A:\n");
-            imprime_mat(matrizA,tamMatriz);
+            criaMatriz (matrizX,tamMatriz);
+            fatoracaoLU(matrizLU,matrizX,tamMatriz);
+            criaMatriz (matrizR,tamMatriz);
+            multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
+            imprime_mat(matrizR,tamMatriz);
+            printf("\n");
     }
 
 }

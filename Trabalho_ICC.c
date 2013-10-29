@@ -75,29 +75,50 @@ void fatoracaoLU(tipo_matriz *mat,double *resultado,int tamMatriz){
 		iden[i]=0.0;
 	}
 	for(k=0;k<tamMatriz;k++){
+		printf("k=%d\n",k);
 		iden[k]=1.0;
-		resultado[0]=iden[0];
-		printf("%lf\n", resultado[0]);
+		resultado[0]=iden[mat->vetorLinha[0]];
+		for(i=0;i<tamMatriz;i++)
+			printf("[%lf]\n", iden[mat->vetorLinha[i]]);
+
 		for(i=1;i<tamMatriz;i++){
 			soma=0;
 			for(j=0;j<i;j++){
-				soma=soma+resultado[j]*(mat->matriz[i][j]);
+				soma=soma+resultado[j]*(mat->matriz[mat->vetorLinha[i]][j]);
 			}
-			resultado[i]=iden[i]-soma;
-			printf("%lf\n", resultado[i]);
+			printf("Identidade=%lf\n", iden[mat->vetorLinha[i]]);
+			resultado[i]=iden[mat->vetorLinha[i]]-soma;
 		}
+
 		printf("--------------\n");
-		matrizX->matriz[tamMatriz-1][k]=resultado[i-1]/mat->matriz[tamMatriz-1][tamMatriz-1];
-		printf("%lf\n",matrizX->matriz[tamMatriz-1][k]);
-		for(i=tamMatriz-2;i>0;i--){
+
+		for(i=0;i<tamMatriz;i++)
+			printf("Z%d:=%lf\n",i,resultado[i]);
+
+
+		matrizX->matriz[mat->vetorLinha[tamMatriz-1]][k]=resultado[i-1]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
+		printf("Resultado da divisão do ultimo elemento=%lf\n\n",matrizX->matriz[mat->vetorLinha[tamMatriz-1]][k]);
+		imprime_mat(mat,tamMatriz);
+		printf("\n");
+		for(i=tamMatriz-2;i>=0;i--){
 			soma=0;
+			printf("Z[%d]= %lf\n",i,resultado[i]);
 			for(j=tamMatriz-1;j>i;j--){
-				soma=soma+matrizX->matriz[i][j]*(mat->matriz[i][j]);
+				printf("MatrizX=%lf\n",matrizX->matriz[mat->vetorLinha[i+1]][k]);
+				printf("MatrizLU=%lf\n",mat->matriz[mat->vetorLinha[i]][j]);
+				soma=soma+(matrizX->matriz[mat->vetorLinha[j]][k]*(mat->matriz[mat->vetorLinha[i]][j]));
+
 			}
-			matrizX->matriz[i][j-1]=resultado[i]/soma;
+			printf("SomaUX= %lf\n\n", soma);
+			matrizX->matriz[mat->vetorLinha[i]][k]=(resultado[i]-soma)/mat->matriz[mat->vetorLinha[i]][j];
+			printf("Resultado da divisão= %lf\n\n", matrizX->matriz[i][k]);
 		}
+
+		printf("Fatoração LU para k=%d\n",k);
+		printf("\n");
 		iden[k]=0;
 	}
+	printf("\n");
 	imprime_mat(matrizX,tamMatriz);
 	printf("\n");
 	
@@ -177,10 +198,10 @@ void zeraColuna(tipo_matriz* mat,int linZerada,int i,int tamMatriz){
 void pivoteamento(tipo_matriz* mat,int i, int tamMatriz){
         int novaLinha;
         int lin;
-        /*novaLinha=procuraMaior(mat,i,tamMatriz); // procura o maior elemento dentro da coluna
+        novaLinha=procuraMaior(mat,i,tamMatriz); // procura o maior elemento dentro da coluna
         if(novaLinha>=0)
                 trocaLinhas(mat,i,novaLinha,tamMatriz); // caso exista esse elemento troca a linha atual com a linha do novo elemento
-        */
+
         for(lin=i+1;lin<tamMatriz;lin++)
                 zeraColuna(mat,lin,i,tamMatriz); // zera a coluna abaixo da linha atual, seguindo o metodo de Gauss
         
@@ -217,7 +238,7 @@ int resolve_mat(tipo_matriz* mat,int tamMatriz,int erro, unsigned int refinament
 }
 
 int main(int argc, char *argv[]){
-    int saidaArq,tamMatriz;
+    int saidaArq,tamMatriz,i,j;
     double erro=0.0001; // valor padrão definido pelo professor
     unsigned int refinamento=0; // valor padrão definido pelo professor
     char *arquivo_entrada=NULL;

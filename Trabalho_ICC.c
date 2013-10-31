@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 typedef struct tipo_matriz{
 	double **matriz;
@@ -8,7 +9,7 @@ typedef struct tipo_matriz{
 
 }tipo_matriz;
 
-long int le_parametros(long int argc, char *argv[],double *erro,unsigned long int *refinamento,char **arquivo_entrada,char **arquivo_saida){
+long int le_parametros(long int argc, char *argv[],long double *erro,unsigned long int *refinamento,char **arquivo_entrada,char **arquivo_saida){
     long int i;
     char *end;
     for(i=1;i<argc;i++){//if com as condicoes do parametro
@@ -20,7 +21,6 @@ long int le_parametros(long int argc, char *argv[],double *erro,unsigned long in
         	while(*arquivo_entrada==NULL){
         		*arquivo_entrada = malloc (sizeof(char)*strlen(argv[i+1])+1);
         	}
-        	printf("copiou1\n");
         	strcpy(*arquivo_entrada,argv[i+1]);
         }
         else if(strcmp(argv[i],"-o")==0){
@@ -92,8 +92,9 @@ void criaIdentidade(double *vet,long long int tamMatriz){
 
 // rij=bi-Axi
 
-void calculaNorma(tipo_matriz *mat,long int tamMatriz,double erro,double *norma){
+void calculaNorma(tipo_matriz *mat,long int tamMatriz,long double erro,double *norma){
 	long int i,j;
+	double soma;
 	for(i=0;i<tamMatriz;i++){
 		soma=0.0;
 		for(j=0;j<tamMatriz;j++){
@@ -101,20 +102,78 @@ void calculaNorma(tipo_matriz *mat,long int tamMatriz,double erro,double *norma)
 		}
 		norma[i]=sqrt(soma);
 	}
+	
+}
 
+void escalonaR(tipo_matriz *matR,tipo_matriz *matLU,long int tamMatriz,long int col){
+	long int i,j,k;
+	double soma;
+	for(i=1;i<tamMatriz;i++){
+		soma=0.0;	
+		for(j=0;j<i;j++){
+			soma+=matR->matriz[matLU->vetorLinha[j]][col]*matLU->matriz[matLU->vetorLinha[i]][j];
+		}
+		matR->matriz[matLU->vetorLinha[i]][col]+=soma;
+	}
+}
+
+void resolveAxb(tipo_matriz *matLU,tipo_matriz *matRes,tipo_matriz *matrizX,long int tamMatriz,long int col){
+	long int i,j,k;
+	double soma;
+	tipo_matriz* matrizZ = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+	criaMatriz (matrizZ,tamMatriz);
+	matrizZ->matriz[0][col]=matRes->matriz[matLU->vetorLinha[0]][col];
+	// calcula L
+	for(i=1;i<tamMatriz;i++){
+		soma=0.0;
+		for(j=0;j<i;j++){
+			soma=soma+matrizZ->matriz[j][col]*(matLU->matriz[matLU->vetorLinha[i]][j]);
+		}
+		matrizZ->matriz[i][col]=matRes->matriz[matLU->vetorLinha[i]][col]-soma;
+	}
+	//Calcula U
+	matrizX->matriz[tamMatriz-1][col]=matrizZ->matriz[i-1][col]/matLU->matriz[matLU->vetorLinha[tamMatriz-1]][tamMatriz-1];
+	for(i=tamMatriz-2;i>=0;i--){
+		soma=0;
+		for(j=tamMatriz-1;j>i;j--){
+			soma=soma+(matrizX->matriz[j][col]*(matLU->matriz[matLU->vetorLinha[i]][j]));
+		}
+		matrizX->matriz[i][col]=(matrizZ->matriz[i][col]-soma)/matLU->matriz[matLU->vetorLinha[i]][j];
+	}
+		
 }
 
 
-void resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,long int tamMatriz){
+int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro){
 	//guardar coluna R*L nela mesma
-
+	long int i,j,k,l,cont;
+	tipo_matriz* matW = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+	criaMatriz(matW,tamMatriz);
+	cont=0;
+	for(j=0;j<tamMatriz;j++){
+		if(norma[j]>erro){
+			escalonaR(matR,matLU,tamMatriz,j);
+			resolveAxb(matLU,matR,matW,tamMatriz,j);
+			for(l=0;l<tamMatriz;l++)
+				matX->matriz[l][j]+=matW->matriz[l][j];
+		}
+		else{
+			cont++;
+		}
+	}
+	if(cont==tamMatriz-1)
+		return 0;
+	else
+		return 1;
+	
 }
 
-void refinamento(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long int tamMatriz,double *norma){
+int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double erro,long int tamMatriz,double *norma){
 	long int i,j,k;
 	double soma;
 	double *iden;
-
+	int res;
+	
 	iden=(double*)malloc (sizeof(double)*tamMatriz);
 	tipo_matriz* matrizAxi = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 	tipo_matriz* matrizResiduo = (tipo_matriz*) malloc(sizeof(tipo_matriz));
@@ -131,18 +190,21 @@ void refinamento(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long int
 			for(j=0;j<tamMatriz;j++){
 				soma+=matA->matriz[i][j]*matX->matriz[j][k];
 			}
-			Axi[i][k]=soma;
+			matrizAxi->matriz[i][k]=soma;
 		}
 		for(i=0;i<tamMatriz;i++){
 			matrizResiduo->matriz[i][k]=iden[i]-matrizAxi->matriz[i][k];
 		}
-
+		iden[k]=0.0;
 	}
-	calculaNorma(matrizResiduo->matriz,tamMatriz,norma);
-	resolveRefinado(matrizResiduo,matLU,tamMatriz);
-
-
-}
+	
+	calculaNorma(matrizResiduo,tamMatriz,erro,norma);
+	res=resolveRefinado(matrizResiduo,matLU,matX,tamMatriz,norma,erro);
+	if(res==0)
+		return 0;
+	else
+		return 1;
+}	
 
 
 void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,long int tamMatriz){
@@ -286,7 +348,7 @@ void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz){
  * Chama as funcoes necessarias para resolver a mat por gauss
  * 
  */
-long int resolve_mat(tipo_matriz* mat,long int tamMatriz,long int erro, unsigned long int refinamento){
+long int resolve_mat(tipo_matriz* mat,long int tamMatriz){
         long int i;
         long int vetorLinha[tamMatriz];
         for(i=0;i<tamMatriz-1;i++){
@@ -295,8 +357,10 @@ long int resolve_mat(tipo_matriz* mat,long int tamMatriz,long int erro, unsigned
 }
 
 long int main(long int argc, char *argv[]){
-    long int saidaArq,tamMatriz,i,j;
-    double erro=0.0001; // valor padrão definido pelo professor
+    long int saidaArq,tamMatriz,i,j,nRef;
+    int semRefi=1;
+    long double erro=0.0001; // valor padrão definido pelo professor
+    double *norma;
     unsigned long int refinamento=0; // valor padrão definido pelo professor
     char *arquivo_entrada=NULL;
     char *arquivo_saida=NULL;
@@ -306,18 +370,31 @@ long int main(long int argc, char *argv[]){
     tipo_matriz* matrizR = (tipo_matriz*) malloc(sizeof(tipo_matriz));
     FILE *arq=NULL;
     saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verfica os valores passados por parametro
+    nRef=0;
     if(saidaArq!=0){
             if(arquivo_entrada!=NULL){
                     arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
             }
             tamMatriz=le_mat(arq,matrizA); //le a mat, seja pelo terminal , ou por um arquivo texto
-            
+            norma=(double *) malloc(sizeof(double)*tamMatriz);
             criaMatriz (matrizLU,tamMatriz);
             copiaMatriz(matrizA, matrizLU,tamMatriz);
-            resolve_mat(matrizLU,tamMatriz,erro,refinamento); // resolve a mat por gauss
+            resolve_mat(matrizLU,tamMatriz); // resolve a mat por gauss
             criaMatriz (matrizX,tamMatriz);
             fatoracaoLU(matrizLU,matrizX,tamMatriz);
-            imprime_mat(matrizX,tamMatriz);
+            imprime_mat(matrizLU,tamMatriz);
+            printf("\n");
+            criaMatriz (matrizR,tamMatriz);
+            multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
+            imprime_mat(matrizR,tamMatriz);
+            printf("\n");
+            while(nRef<refinamento && semRefi==1){
+            	
+            	semRefi=refinar(matrizA,matrizX,matrizLU,erro,tamMatriz,norma);
+            	fatoracaoLU(matrizLU,matrizX,tamMatriz);
+            	nRef++;
+            }
+            
             criaMatriz (matrizR,tamMatriz);
             multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
             imprime_mat(matrizR,tamMatriz);

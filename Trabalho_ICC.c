@@ -84,13 +84,70 @@ void imprime_mat(tipo_matriz* mat,long int tamMatriz){
 	}
 }
 
-void criaIdentidade(double *vet,long long int tamMatriz){
-	long int i;
-	for(i=0;i<tamMatriz;i++)
-		vet[i]=0.0;
+void criaIdentidade(tipo_matriz *mat,long int tamMatriz){
+	long int i,j;
+
+	(mat->matriz) = malloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
+	    criaVetorLinha(mat,tamMatriz);
+	    for(i=0;i<tamMatriz;i++){
+	    	mat->matriz[i] = malloc((sizeof(double))*tamMatriz); // aloca as colunas da mat
+			for(j=0;j<tamMatriz;j++)
+				if(i == j)
+					mat->matriz[i][j]=1.0;
+				else
+					mat->matriz[i][j]=0.0;
+	}
 }
 
 // rij=bi-Axi
+
+void calculaZ(tipo_matriz *mat, tipo_matriz *matrizZ,tipo_matriz *matrizB,long int tamMatriz,long int k){
+	long int i,j;
+	double soma;
+	// calcula L
+	matrizZ->matriz[0][k]=matrizB->matriz[mat->vetorLinha[0]][k];
+	for(i=1;i<tamMatriz;i++){
+		soma=0;
+		for(j=0;j<i;j++){
+			soma=soma+matrizZ->matriz[j][k]*(mat->matriz[mat->vetorLinha[i]][j]);
+		}
+		matrizZ->matriz[i][k]=matrizB->matriz[mat->vetorLinha[i]][k]-soma;
+	}
+}
+
+void calculaX(tipo_matriz *mat, tipo_matriz *matrizX,tipo_matriz *matrizZ,long int tamMatriz,long int k){
+	long int i,j;
+	double soma;
+	//Calcula U
+	matrizX->matriz[tamMatriz-1][k]=matrizZ->matriz[i-1][k]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
+	for(i=tamMatriz-2;i>=0;i--){
+		soma=0;
+		for(j=tamMatriz-1;j>i;j--){
+			soma=soma+(matrizX->matriz[j][k]*(mat->matriz[mat->vetorLinha[i]][j]));
+		}
+		matrizX->matriz[i][k]=(matrizZ->matriz[i][k]-soma)/mat->matriz[mat->vetorLinha[i]][j];
+	}
+}
+
+void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizX,tipo_matriz *matrizResiduo,tipo_matriz *matrizZ,long int tamMatriz){
+	long int i,j,k;
+	double soma;
+	tipo_matriz* matrizAxi = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+	criaMatriz(matrizAxi,tamMatriz);
+	//Calcula Residuo
+	for(k=0;k<tamMatriz;k++){
+		for(i=0;i<tamMatriz;i++){
+			soma=0.0;
+			for(j=0;j<tamMatriz;j++){
+				soma+=matrizA->matriz[i][j]*matrizX->matriz[j][k];
+			}
+			matrizAxi->matriz[i][k]=soma;
+		}
+		for(i=0;i<tamMatriz;i++){
+			matrizResiduo->matriz[i][k]=matrizZ->matriz[i][k]-matrizAxi->matriz[i][k];
+		}
+	}
+}
 
 void calculaNorma(tipo_matriz *mat,long int tamMatriz,long double erro,double *norma){
 	long int i,j;
@@ -105,46 +162,10 @@ void calculaNorma(tipo_matriz *mat,long int tamMatriz,long double erro,double *n
 	
 }
 
-void escalonaR(tipo_matriz *matR,tipo_matriz *matLU,long int tamMatriz,long int col){
-	long int i,j,k;
-	double soma;
-	for(i=1;i<tamMatriz;i++){
-		soma=0.0;	
-		for(j=0;j<i;j++){
-			soma+=matR->matriz[matLU->vetorLinha[j]][col]*matLU->matriz[matLU->vetorLinha[i]][j];
-		}
-		matR->matriz[matLU->vetorLinha[i]][col]+=soma;
-	}
-}
-
-void resolveAxb(tipo_matriz *matLU,tipo_matriz *matRes,tipo_matriz *matrizX,long int tamMatriz,long int col){
-	long int i,j,k;
-	double soma;
-	tipo_matriz* matrizZ = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-	criaMatriz (matrizZ,tamMatriz);
-	matrizZ->matriz[0][col]=matRes->matriz[matLU->vetorLinha[0]][col];
-	// calcula L
-	for(i=1;i<tamMatriz;i++){
-		soma=0.0;
-		for(j=0;j<i;j++){
-			soma=soma+matrizZ->matriz[j][col]*(matLU->matriz[matLU->vetorLinha[i]][j]);
-		}
-		matrizZ->matriz[i][col]=matRes->matriz[matLU->vetorLinha[i]][col]-soma;
-	}
-	//Calcula U
-	matrizX->matriz[tamMatriz-1][col]=matrizZ->matriz[i-1][col]/matLU->matriz[matLU->vetorLinha[tamMatriz-1]][tamMatriz-1];
-	for(i=tamMatriz-2;i>=0;i--){
-		soma=0;
-		for(j=tamMatriz-1;j>i;j--){
-			soma=soma+(matrizX->matriz[j][col]*(matLU->matriz[matLU->vetorLinha[i]][j]));
-		}
-		matrizX->matriz[i][col]=(matrizZ->matriz[i][col]-soma)/matLU->matriz[matLU->vetorLinha[i]][j];
-	}
-		
-}
 
 
-int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro){
+
+int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro,long int *numRef){
 	//guardar coluna R*L nela mesma
 	long int i,j,k,l,cont;
 	tipo_matriz* matW = (tipo_matriz*) malloc(sizeof(tipo_matriz));
@@ -152,10 +173,12 @@ int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long 
 	cont=0;
 	for(j=0;j<tamMatriz;j++){
 		if(norma[j]>erro){
-			escalonaR(matR,matLU,tamMatriz,j);
-			resolveAxb(matLU,matR,matW,tamMatriz,j);
+			calculaZ(matLU,matR,matR,tamMatriz,j);
+			calculaX(matLU,matW,matR,tamMatriz,j);
 			for(l=0;l<tamMatriz;l++)
 				matX->matriz[l][j]+=matW->matriz[l][j];
+			matR->vetorLinha[j]+=matR->vetorLinha[j];
+			numRef[j]++;
 		}
 		else{
 			cont++;
@@ -168,80 +191,45 @@ int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long 
 	
 }
 
-int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double erro,long int tamMatriz,double *norma){
+int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double erro,long int tamMatriz,double *norma,long int *numRef){
 	long int i,j,k;
 	double soma;
-	double *iden;
 	int res;
 	
-	iden=(double*)malloc (sizeof(double)*tamMatriz);
+
 	tipo_matriz* matrizAxi = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 	tipo_matriz* matrizResiduo = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+	tipo_matriz* matrizId = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 
 	criaMatriz(matrizResiduo,tamMatriz);
 	criaMatriz(matrizAxi,tamMatriz);
 
-	criaIdentidade(iden,tamMatriz);
-
-	for(k=0;k<tamMatriz;k++){
-		iden[k]=1.0;
-		for(i=0;i<tamMatriz;i++){
-			soma=0.0;
-			for(j=0;j<tamMatriz;j++){
-				soma+=matA->matriz[i][j]*matX->matriz[j][k];
-			}
-			matrizAxi->matriz[i][k]=soma;
-		}
-		for(i=0;i<tamMatriz;i++){
-			matrizResiduo->matriz[i][k]=iden[i]-matrizAxi->matriz[i][k];
-		}
-		iden[k]=0.0;
-	}
-	
+	criaIdentidade(matrizId,tamMatriz);
+	calculaResiduo(matA, matX,matrizResiduo, matrizId,tamMatriz);
 	calculaNorma(matrizResiduo,tamMatriz,erro,norma);
-	res=resolveRefinado(matrizResiduo,matLU,matX,tamMatriz,norma,erro);
+	
+	res=resolveRefinado(matrizResiduo,matLU,matX,tamMatriz,norma,erro,numRef);
 	if(res==0)
 		return 0;
 	else
 		return 1;
 }	
 
-
 void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,long int tamMatriz){
 	long int i,j,k;
 	double soma;
-	double *iden;
-	iden=(double*)malloc (sizeof(double)*tamMatriz);
+	tipo_matriz* matrizId = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 	tipo_matriz* matrizZ = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 
 	criaMatriz (matrizZ,tamMatriz);
-
-	criaIdentidade(iden,tamMatriz);
+	criaIdentidade(matrizId,tamMatriz);
 
 	for(k=0;k<tamMatriz;k++){
-		iden[k]=1.0;
-		matrizZ->matriz[0][k]=iden[mat->vetorLinha[0]];
-
 		// calcula L
-		for(i=1;i<tamMatriz;i++){
-			soma=0;
-			for(j=0;j<i;j++){
-				soma=soma+matrizZ->matriz[j][k]*(mat->matriz[mat->vetorLinha[i]][j]);
-			}
-			matrizZ->matriz[i][k]=iden[mat->vetorLinha[i]]-soma;
-		}
+		calculaZ(mat,matrizZ,matrizId,tamMatriz,k);
 
 		//Calcula U
-		matrizX->matriz[tamMatriz-1][k]=matrizZ->matriz[i-1][k]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
-		for(i=tamMatriz-2;i>=0;i--){
-			soma=0;
-			for(j=tamMatriz-1;j>i;j--){
-				soma=soma+(matrizX->matriz[j][k]*(mat->matriz[mat->vetorLinha[i]][j]));
-
-			}
-			matrizX->matriz[i][k]=(matrizZ->matriz[i][k]-soma)/mat->matriz[mat->vetorLinha[i]][j];
-		}
-		iden[k]=0;
+		calculaX(mat,matrizX,matrizZ,tamMatriz,k);
 	}
 
 	
@@ -298,9 +286,6 @@ void trocaLinhas (tipo_matriz *mat, long int linhaOri, long int linhaDest, long 
         mat->vetorLinha[linhaDest]=aux;
 }
 
-
-
-
 /**
  *  Zera a coluna da das linhas abaixo da linha atual passada no parametro i
  */
@@ -331,8 +316,6 @@ void pivoteamento(tipo_matriz* mat,long int i, long int tamMatriz){
         
 }
 
-
-
 void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz){
 	long int i,j;
 	for(i=0;i<tamMatriz;i++){
@@ -340,7 +323,6 @@ void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz){
 			mat2->matriz[i][j]=mat1->matriz[i][j];
 		}
 	}
-	
 	
 }
 
@@ -361,6 +343,7 @@ long int main(long int argc, char *argv[]){
     int semRefi=1;
     long double erro=0.0001; // valor padrão definido pelo professor
     double *norma;
+    long int *numRef;
     unsigned long int refinamento=0; // valor padrão definido pelo professor
     char *arquivo_entrada=NULL;
     char *arquivo_saida=NULL;
@@ -377,9 +360,10 @@ long int main(long int argc, char *argv[]){
             }
             tamMatriz=le_mat(arq,matrizA); //le a mat, seja pelo terminal , ou por um arquivo texto
             norma=(double *) malloc(sizeof(double)*tamMatriz);
+            numRef=(long int *) malloc(sizeof(long int)*tamMatriz);
             criaMatriz (matrizLU,tamMatriz);
             copiaMatriz(matrizA, matrizLU,tamMatriz);
-            resolve_mat(matrizLU,tamMatriz); // resolve a mat por gauss
+            resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
             criaMatriz (matrizX,tamMatriz);
             fatoracaoLU(matrizLU,matrizX,tamMatriz);
             imprime_mat(matrizLU,tamMatriz);
@@ -388,9 +372,11 @@ long int main(long int argc, char *argv[]){
             multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
             imprime_mat(matrizR,tamMatriz);
             printf("\n");
-            while(nRef<refinamento && semRefi==1){
+            while(nRef<refinamento){
             	
-            	semRefi=refinar(matrizA,matrizX,matrizLU,erro,tamMatriz,norma);
+            	semRefi=refinar(matrizA,matrizX,matrizLU,erro,tamMatriz,norma,numRef);
+            	if(semRefi==0)
+            		break;
             	fatoracaoLU(matrizLU,matrizX,tamMatriz);
             	nRef++;
             }

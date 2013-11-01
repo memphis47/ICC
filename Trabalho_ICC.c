@@ -99,7 +99,39 @@ void criaIdentidade(tipo_matriz *mat,long int tamMatriz){
 	}
 }
 
-// rij=bi-Axi
+
+
+int verificaLinha(tipo_matriz *mat,long int tamMatriz){
+	long int i,j,cont;
+	for(j=0;j<tamMatriz;j++){
+		for(i=0;i<tamMatriz;i++){
+			if(mat->matriz[i][j]==0)
+				cont++;
+		}
+		if(cont==tamMatriz-1){
+			fprintf(stderr,"Linha Zerada !!!\n");
+			exit(1);
+		}
+	}
+	return 1;
+}
+
+int verificaColuna(tipo_matriz *mat,long int tamMatriz){
+	long int i,j,cont;
+	for(i=0;j<tamMatriz;j++){
+		for(j=0;i<tamMatriz;i++){
+			if(mat->matriz[i][j]==0)
+				cont++;
+		}
+		if(cont==tamMatriz-1){
+			fprintf(stderr,"Coluna Zerada !!!\n");
+			exit(1);
+		}
+	}
+	return 1;
+}
+
+
 
 void calculaZ(tipo_matriz *mat, tipo_matriz *matrizZ,tipo_matriz *matrizB,long int tamMatriz,long int k){
 	long int i,j;
@@ -177,7 +209,6 @@ int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long 
 			calculaX(matLU,matW,matR,tamMatriz,j);
 			for(l=0;l<tamMatriz;l++)
 				matX->matriz[l][j]+=matW->matriz[l][j];
-			matR->vetorLinha[j]+=matR->vetorLinha[j];
 			numRef[j]++;
 		}
 		else{
@@ -268,9 +299,15 @@ long int procuraMaior(tipo_matriz* mat,long int i, long int tamMatriz){
         long int lin,maiorLin=-1;
         double maiorAux=mat->matriz[mat->vetorLinha[i]][i];// o primeiro maior elemento sera o da linha atual para efeito de comparações
         for(lin=i+1;lin<tamMatriz;lin++){
-                if(mat->matriz[mat->vetorLinha[lin]][i]>maiorAux){ 
-                        maiorAux=mat->matriz[mat->vetorLinha[lin]][i];
-                        maiorLin=lin;
+                if(mat->matriz[mat->vetorLinha[lin]][i]>maiorAux){
+                	if(mat->matriz[mat->vetorLinha[lin]][i]==0){
+                		fprintf(stderr,"Pivo igual a Zero !!!\n");
+                		exit(1);
+                	}
+                	else{
+						maiorAux=mat->matriz[mat->vetorLinha[lin]][i];
+						maiorLin=lin;
+                	}
                 }
         }
         return maiorLin; // retorna a linha que esta esse elemento
@@ -308,7 +345,7 @@ void pivoteamento(tipo_matriz* mat,long int i, long int tamMatriz){
 	long int lin;
 	novaLinha=procuraMaior(mat,i,tamMatriz); // procura o maior elemento dentro da coluna
 	if(novaLinha>=0)
-			trocaLinhas(mat,i,novaLinha,tamMatriz); // caso exista esse elemento troca a linha atual com a linha do novo elemento
+		trocaLinhas(mat,i,novaLinha,tamMatriz); // caso exista esse elemento troca a linha atual com a linha do novo elemento
 
 	for(lin=i+1;lin<tamMatriz;lin++)
 		zeraColuna(mat,lin,i,tamMatriz); // zera a coluna abaixo da linha atual, seguindo o metodo de Gauss
@@ -333,10 +370,27 @@ void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz){
 long int resolve_mat(tipo_matriz* mat,long int tamMatriz){
         long int i;
         long int vetorLinha[tamMatriz];
-        for(i=0;i<tamMatriz-1;i++){
-                pivoteamento(mat,i,tamMatriz); // pivoteia as linhas da mat para zerar as colunas
+        if(verificaLinha(mat,tamMatriz)==1 && verificaColuna(mat,tamMatriz)==1){
+			for(i=0;i<tamMatriz-1;i++){
+					pivoteamento(mat,i,tamMatriz); // pivoteia as linhas da mat para zerar as colunas
+			}
         }
 }
+
+void imprimeResultado(double *norma,long int *numRef,long int tamMatriz){
+	long int i;
+	printf("\n#\n# Norma L2: ");
+	for(i=0;i<tamMatriz;i++){
+		printf("%.16lf ",norma[i]);
+	}
+	printf("\n# NumRefinamento: ");
+	for(i=0;i<tamMatriz;i++){
+			printf("%ld ",numRef[i]);
+	}
+	printf("\n#\n%ld\n",tamMatriz);
+
+}
+
 
 long int main(long int argc, char *argv[]){
     long int saidaArq,tamMatriz,i,j,nRef;
@@ -347,10 +401,10 @@ long int main(long int argc, char *argv[]){
     unsigned long int refinamento=0; // valor padrão definido pelo professor
     char *arquivo_entrada=NULL;
     char *arquivo_saida=NULL;
-    tipo_matriz* matrizLU = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a mat
-    tipo_matriz* matrizA = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a mat
-    tipo_matriz* matrizX = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-    tipo_matriz* matrizR = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+    tipo_matriz* matrizLU = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz LU
+    tipo_matriz* matrizA = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz A
+    tipo_matriz* matrizX = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz X
+    tipo_matriz* matrizR = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz R
     FILE *arq=NULL;
     saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verfica os valores passados por parametro
     nRef=0;
@@ -363,24 +417,26 @@ long int main(long int argc, char *argv[]){
             numRef=(long int *) malloc(sizeof(long int)*tamMatriz);
             criaMatriz (matrizLU,tamMatriz);
             copiaMatriz(matrizA, matrizLU,tamMatriz);
-            resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
             criaMatriz (matrizX,tamMatriz);
+            resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
             fatoracaoLU(matrizLU,matrizX,tamMatriz);
-            imprime_mat(matrizLU,tamMatriz);
+            imprime_mat(matrizX,tamMatriz);
             printf("\n");
             criaMatriz (matrizR,tamMatriz);
             multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
             imprime_mat(matrizR,tamMatriz);
             printf("\n");
             while(nRef<refinamento){
-            	
+
             	semRefi=refinar(matrizA,matrizX,matrizLU,erro,tamMatriz,norma,numRef);
             	if(semRefi==0)
             		break;
-            	fatoracaoLU(matrizLU,matrizX,tamMatriz);
+
             	nRef++;
             }
-            
+            imprimeResultado(norma,numRef,tamMatriz);
+            imprime_mat(matrizX,tamMatriz);
+            printf("\n");
             criaMatriz (matrizR,tamMatriz);
             multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
             imprime_mat(matrizR,tamMatriz);

@@ -110,11 +110,12 @@ void criaIdentidade(tipo_matriz *mat,long int tamMatriz){
 int verificaLinha(tipo_matriz *mat,long int tamMatriz){
 	long int i,j,cont;
 	for(j=0;j<tamMatriz;j++){
+		cont=0;
 		for(i=0;i<tamMatriz;i++){
 			if(mat->matriz[i][j]==0)
 				cont++;
 		}
-		if(cont==tamMatriz-1){
+		if(cont==tamMatriz){
 			fprintf(stderr,"Linha Zerada !!!\n");
 			exit(1);
 		}
@@ -124,12 +125,13 @@ int verificaLinha(tipo_matriz *mat,long int tamMatriz){
 
 int verificaColuna(tipo_matriz *mat,long int tamMatriz){
 	long int i,j,cont;
-	for(i=0;j<tamMatriz;j++){
-		for(j=0;i<tamMatriz;i++){
+	for(i=0;i<tamMatriz;i++){
+		cont=0;
+		for(j=0;j<tamMatriz;j++){
 			if(mat->matriz[i][j]==0)
 				cont++;
 		}
-		if(cont==tamMatriz-1){
+		if(cont==tamMatriz){
 			fprintf(stderr,"Coluna Zerada !!!\n");
 			exit(1);
 		}
@@ -376,7 +378,7 @@ void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz){
 long int resolve_mat(tipo_matriz* mat,long int tamMatriz){
         long int i;
         long int vetorLinha[tamMatriz];
-        if(verificaLinha(mat,tamMatriz)==1 && verificaColuna(mat,tamMatriz)==1){
+        if((verificaLinha(mat,tamMatriz)==1) && (verificaColuna(mat,tamMatriz)==1)){
 			for(i=0;i<tamMatriz-1;i++){
 					pivoteamento(mat,i,tamMatriz); // pivoteia as linhas da mat para zerar as colunas
 			}
@@ -462,12 +464,13 @@ long int main(long int argc, char *argv[]){
             	arq=fopen(arquivo_saida,"w"); 
             	escreve_arquivo(arq,norma,numRef,matrizX,tamMatriz);
             }
-            else
+            else{
             	criaMatriz (matrizR,tamMatriz);
             	multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
             	imprime_mat(NULL,matrizR,tamMatriz);
             	printf("\n");
             	imprimeResultado(matrizX,norma,numRef,tamMatriz);
+            }
     }
 
 }

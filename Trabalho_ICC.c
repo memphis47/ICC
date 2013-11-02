@@ -27,7 +27,7 @@ long int le_parametros(long int argc, char *argv[],long double *erro,unsigned lo
         	while(*arquivo_saida==NULL){
         		*arquivo_saida = malloc (sizeof(char)*strlen(argv[i+1])+1);
         	}
-        	strcpy(*arquivo_entrada,argv[i+1]); //recebe o caminho para o arquivo de saida
+        	strcpy(*arquivo_saida,argv[i+1]); //recebe o caminho para o arquivo de saida
         }
         else if((strcmp(argv[i],"-h")==0) || argc==2){ //imprime na tela uma explicação dos parametros, caso o usuario tenha digitado o parametro errado ou queira saber atraves do parametro -h quais são os parametros
             printf( "\n\nDefinicao dos Parametros do Trabalho de ICC :\n"
@@ -75,12 +75,18 @@ void multiplicaMatriz(tipo_matriz* matA,tipo_matriz* matB,tipo_matriz* matR,long
 /**
  *  funcao para imprimir a mat
  */
-void imprime_mat(tipo_matriz* mat,long int tamMatriz){
+void imprime_mat(FILE *arq,tipo_matriz* mat,long int tamMatriz){
 	long int i,j;
+	FILE *le;
+	if(arq==NULL)
+		le=stdout;
+	else
+		le=arq;
 	for(i=0;i<tamMatriz;i++){
-		for(j=0;j<tamMatriz;j++)
-			printf("%.20lf ", mat->matriz[mat->vetorLinha[i]][j]);
-		printf("\n");
+		for(j=0;j<tamMatriz;j++){
+			   fprintf(le,"%.20lf ", mat->matriz[mat->vetorLinha[i]][j]);
+		}
+		fprintf(le,"\n");
 	}
 }
 
@@ -377,7 +383,7 @@ long int resolve_mat(tipo_matriz* mat,long int tamMatriz){
         }
 }
 
-void imprimeResultado(double *norma,long int *numRef,long int tamMatriz){
+void imprimeResultado(tipo_matriz *mat,double *norma,long int *numRef,long int tamMatriz){
 	long int i;
 	printf("\n#\n# Norma L2: ");
 	for(i=0;i<tamMatriz;i++){
@@ -388,9 +394,29 @@ void imprimeResultado(double *norma,long int *numRef,long int tamMatriz){
 			printf("%ld ",numRef[i]);
 	}
 	printf("\n#\n%ld\n",tamMatriz);
+	imprime_mat(NULL,mat,tamMatriz);
+	printf("\n");
 
 }
 
+void escreve_arquivo(FILE *arqSai,double *norma,long int *numRef,tipo_matriz *matrizX,long int tamMatriz){
+	long int i,j;
+	fprintf(arqSai,"%s","\n#\n# Norma L2: ");
+	for(i=0;i<tamMatriz;i++){
+		fprintf(arqSai,"%.16lf ",norma[i]);
+	}
+	fprintf(arqSai,"\n# NumRefinamento: ");
+	for(i=0;i<tamMatriz;i++){
+		fprintf(arqSai,"%ld ",numRef[i]);
+	}
+	fprintf(arqSai,"\n#\n%ld\n",tamMatriz);
+	imprime_mat(arqSai,matrizX,tamMatriz);
+	fprintf(arqSai,"\n");
+	 
+	 
+	 
+	 
+}
 
 long int main(long int argc, char *argv[]){
     long int saidaArq,tamMatriz,i,j,nRef;
@@ -420,11 +446,9 @@ long int main(long int argc, char *argv[]){
             criaMatriz (matrizX,tamMatriz);
             resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
             fatoracaoLU(matrizLU,matrizX,tamMatriz);
-            imprime_mat(matrizX,tamMatriz);
-            printf("\n");
             criaMatriz (matrizR,tamMatriz);
             multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
-            imprime_mat(matrizR,tamMatriz);
+            imprime_mat(NULL,matrizR,tamMatriz);
             printf("\n");
             while(nRef<refinamento){
 
@@ -434,13 +458,16 @@ long int main(long int argc, char *argv[]){
 
             	nRef++;
             }
-            imprimeResultado(norma,numRef,tamMatriz);
-            imprime_mat(matrizX,tamMatriz);
-            printf("\n");
-            criaMatriz (matrizR,tamMatriz);
-            multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
-            imprime_mat(matrizR,tamMatriz);
-            printf("\n");
+            if(arquivo_saida!=NULL){
+            	arq=fopen(arquivo_saida,"w"); 
+            	escreve_arquivo(arq,norma,numRef,matrizX,tamMatriz);
+            }
+            else
+            	criaMatriz (matrizR,tamMatriz);
+            	multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
+            	imprime_mat(NULL,matrizR,tamMatriz);
+            	printf("\n");
+            	imprimeResultado(matrizX,norma,numRef,tamMatriz);
     }
 
 }

@@ -3,12 +3,20 @@
 #include <string.h>
 #include <math.h>
 
-typedef struct tipo_matriz{
-	double **matriz;
+/**
+ * Essa Struct guardara uma matriz e um vetor de linha , esse vetor sera usado
+ * para guardar o lugar atual das linhas apos os pivoteamentos da matriz
+ */
+typedef struct tipo_matriz{ 
+	double **matriz; 
 	long int *vetorLinha;
-
 }tipo_matriz;
 
+
+
+/**
+ * le os parametros passados e coloca eles nas variaveis correspondentes
+ */
 long int le_parametros(long int argc, char *argv[],long double *erro,unsigned long int *refinamento,char **arquivo_entrada,char **arquivo_saida){
     long int i;
     char *end;
@@ -21,7 +29,7 @@ long int le_parametros(long int argc, char *argv[],long double *erro,unsigned lo
         	while(*arquivo_entrada==NULL){
         		*arquivo_entrada = malloc (sizeof(char)*strlen(argv[i+1])+1);
         	}
-        	strcpy(*arquivo_entrada,argv[i+1]);
+        	strcpy(*arquivo_entrada,argv[i+1]); // recebe o caminho do arquivo com a matriz de entrada
         }
         else if(strcmp(argv[i],"-o")==0){
         	while(*arquivo_saida==NULL){
@@ -43,15 +51,22 @@ long int le_parametros(long int argc, char *argv[],long double *erro,unsigned lo
     return(1);
 }
 
-//cria um vetor linha para o 
+/**
+ * cria o vetor linha para a matriz, esse vetor sera usado no pivoteamento da matriz
+ */
 void criaVetorLinha(tipo_matriz* mat,long int tamMatriz){
         long int i;
         mat->vetorLinha = (long int*)malloc (sizeof(long int)*tamMatriz);
         for(i=0;i<tamMatriz;i++)
-               mat->vetorLinha[i]=i;
+               mat->vetorLinha[i]=i; /* cada elemento do vetor sera correspondente 
+        							 a um indice que vai de 0 a tamMatriz-1 e que representa uma linha da matriz */
 
 }
 
+
+/**
+ * aloca a matriz e o chama o alocador do vetor, ambos elementos da Struct tipo_matriz
+ */
 void criaMatriz(tipo_matriz *mat,long int tamMatriz){
 	long int i;
 	(mat->matriz) = malloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
@@ -61,6 +76,9 @@ void criaMatriz(tipo_matriz *mat,long int tamMatriz){
 	}
 }
 
+/**
+ * Funcao chamada para multiplicar duas matrizes A e B e devolver o resultado em uma Matriz R
+ */
 void multiplicaMatriz(tipo_matriz* matA,tipo_matriz* matB,tipo_matriz* matR,long int tamMatriz){
 	long int i,j,k;
 	for(i=0;i<tamMatriz;i++){
@@ -73,7 +91,7 @@ void multiplicaMatriz(tipo_matriz* matA,tipo_matriz* matB,tipo_matriz* matR,long
 }
 
 /**
- *  funcao para imprimir a mat
+ *  Funcao para imprimir a matriz passada
  */
 void imprime_mat(FILE *arq,tipo_matriz* mat,long int tamMatriz){
 	long int i,j;
@@ -90,7 +108,10 @@ void imprime_mat(FILE *arq,tipo_matriz* mat,long int tamMatriz){
 	}
 }
 
-void criaIdentidade(tipo_matriz *mat,long int tamMatriz){
+/**
+ * Funcao para criar a matriz identidade
+ */
+void criaIdentidade(tipo_matriz *mat,long int tamMatriz){ 
 	long int i,j;
 
 	(mat->matriz) = malloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
@@ -106,7 +127,10 @@ void criaIdentidade(tipo_matriz *mat,long int tamMatriz){
 }
 
 
-
+/**
+ * Funcao para verificar a linha da matriz, caso a linha esteja zerada a Funcao para o programa
+ * pois se torna impossivel calcular a matriz inversa nesse formato
+ */
 int verificaLinha(tipo_matriz *mat,long int tamMatriz){
 	long int i,j,cont;
 	for(j=0;j<tamMatriz;j++){
@@ -123,6 +147,10 @@ int verificaLinha(tipo_matriz *mat,long int tamMatriz){
 	return 1;
 }
 
+/**
+ * Funcao para verificar a coluna da matriz, caso a coluna esteja zerada a Funcao para o programa
+ * pois se torna impossivel calcular a matriz inversa nesse formato
+ */
 int verificaColuna(tipo_matriz *mat,long int tamMatriz){
 	long int i,j,cont;
 	for(i=0;i<tamMatriz;i++){
@@ -140,7 +168,9 @@ int verificaColuna(tipo_matriz *mat,long int tamMatriz){
 }
 
 
-
+/**
+ *  Funcao para o calculo da conta Lz=B, aonde L eh a matriz mat, z eh a matrizZ e B eh a matrizB 
+ */
 void calculaZ(tipo_matriz *mat, tipo_matriz *matrizZ,tipo_matriz *matrizB,long int tamMatriz,long int k){
 	long int i,j;
 	double soma;
@@ -155,11 +185,14 @@ void calculaZ(tipo_matriz *mat, tipo_matriz *matrizZ,tipo_matriz *matrizB,long i
 	}
 }
 
+/**
+ *  Funcao para o calculo da conta Ux=Z, aonde U eh a matriz mat, x eh a matrizX e Z eh a matrizZ 
+ */
 void calculaX(tipo_matriz *mat, tipo_matriz *matrizX,tipo_matriz *matrizZ,long int tamMatriz,long int k){
 	long int i,j;
 	double soma;
 	//Calcula U
-	matrizX->matriz[tamMatriz-1][k]=matrizZ->matriz[i-1][k]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
+	matrizX->matriz[tamMatriz-1][k]=matrizZ->matriz[tamMatriz-1][k]/mat->matriz[mat->vetorLinha[tamMatriz-1]][tamMatriz-1];
 	for(i=tamMatriz-2;i>=0;i--){
 		soma=0;
 		for(j=tamMatriz-1;j>i;j--){
@@ -169,12 +202,16 @@ void calculaX(tipo_matriz *mat, tipo_matriz *matrizX,tipo_matriz *matrizZ,long i
 	}
 }
 
+
+/**
+ * Funcao para calcular o residuo entre a matriz identidade e a matriz AX
+ */
 void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizX,tipo_matriz *matrizResiduo,tipo_matriz *matrizZ,long int tamMatriz){
 	long int i,j,k;
 	double soma;
 	tipo_matriz* matrizAxi = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 	criaMatriz(matrizAxi,tamMatriz);
-	//Calcula Residuo
+	//Calcula Residuo entre as matrizes
 	for(k=0;k<tamMatriz;k++){
 		for(i=0;i<tamMatriz;i++){
 			soma=0.0;
@@ -189,7 +226,10 @@ void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizX,tipo_matriz *matr
 	}
 }
 
-void calculaNorma(tipo_matriz *mat,long int tamMatriz,long double erro,double *norma){
+/**
+ * Funcao para achar a norma das colunas da matriz residuo, o resultado da conta é guardado no vetor norma
+ */
+void calculaNorma(tipo_matriz *mat,long int tamMatriz,double *norma){
 	long int i,j;
 	double soma;
 	for(i=0;i<tamMatriz;i++){
@@ -202,17 +242,16 @@ void calculaNorma(tipo_matriz *mat,long int tamMatriz,long double erro,double *n
 	
 }
 
-
-
-
+/**
+ * Resolve a conta da matriz refinada ou seja Aw=R
+ */
 int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro,long int *numRef){
-	//guardar coluna R*L nela mesma
-	long int i,j,k,l,cont;
+	long int j,l,cont;
 	tipo_matriz* matW = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 	criaMatriz(matW,tamMatriz);
 	cont=0;
 	for(j=0;j<tamMatriz;j++){
-		if(norma[j]>erro){
+		if(norma[j]>erro){ // caso a minha norma seja maior que o meu erro, sera feita a conta Aw=R
 			calculaZ(matLU,matR,matR,tamMatriz,j);
 			calculaX(matLU,matW,matR,tamMatriz,j);
 			for(l=0;l<tamMatriz;l++)
@@ -220,19 +259,21 @@ int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long 
 			numRef[j]++;
 		}
 		else{
-			cont++;
+			cont++; // caso não seja o contador de colunas que não precisam ser refinadas sera incrementado
 		}
 	}
 	if(cont==tamMatriz-1)
-		return 0;
+		return 0; // caso o meu contador tenha o tamanho da matriz entao eu retorno 1 e assim paro o refinamento da matriz
 	else
-		return 1;
+		return 1; // caso não seja do tamanho da matriz eu continuo o refinamento
 	
 }
 
+
+/**
+ * Chama as funcoes para calcular o residuo, calcular a norma e resolver o refinamento
+ */
 int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double erro,long int tamMatriz,double *norma,long int *numRef){
-	long int i,j,k;
-	double soma;
 	int res;
 	
 
@@ -245,18 +286,21 @@ int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double e
 
 	criaIdentidade(matrizId,tamMatriz);
 	calculaResiduo(matA, matX,matrizResiduo, matrizId,tamMatriz);
-	calculaNorma(matrizResiduo,tamMatriz,erro,norma);
+	calculaNorma(matrizResiduo,tamMatriz,norma);
 	
 	res=resolveRefinado(matrizResiduo,matLU,matX,tamMatriz,norma,erro,numRef);
-	if(res==0)
+	if(res==0) // caso a funcao retorne 0 siginifica que nao existe mais nenhuma coluna para ser refinada
 		return 0;
 	else
-		return 1;
+		return 1;// caso a funcao retorne 1 siginifica que existe pelo menos uma coluna para ser refinada
 }	
 
+/**
+ *  Funcao para fatorar a matriz LU no formato Lz=I e Ux=Z
+ */
 void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,long int tamMatriz){
-	long int i,j,k;
-	double soma;
+	long int k;
+	
 	tipo_matriz* matrizId = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 	tipo_matriz* matrizZ = (tipo_matriz*) malloc(sizeof(tipo_matriz));
 
@@ -276,7 +320,7 @@ void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,long int tamMatriz){
 
 
 /**
- * le a mat usando arq como parametro para saber se existe um arquivo para ler
+ * Funcao para ler a matriz usando arq como parametro para saber se existe um arquivo para ler
  * ou se sera usado o terminal para a leitura da mat
  */
 long int le_mat(FILE *arq,tipo_matriz* mat){
@@ -301,7 +345,7 @@ long int le_mat(FILE *arq,tipo_matriz* mat){
 
 
 /**
- * procura o maior elemento pertencente a coluna i nas linhas abaixo da linha atual
+ * Funcao para procurar o maior elemento pertencente a coluna i nas linhas abaixo da linha atual
  */
 long int procuraMaior(tipo_matriz* mat,long int i, long int tamMatriz){
         long int lin,maiorLin=-1;
@@ -322,7 +366,7 @@ long int procuraMaior(tipo_matriz* mat,long int i, long int tamMatriz){
 }
 
 /**
- *  troca as linhas da mat, ou seja troca de posição os elementos entre as duas linhas
+ *  Funcao que troca as linhas da matriz, ou seja troca de posição os elementos entre as duas linhas
  */
 void trocaLinhas (tipo_matriz *mat, long int linhaOri, long int linhaDest, long int tamMatriz){
         long int aux;
@@ -345,8 +389,8 @@ void zeraColuna(tipo_matriz* mat,long int linZerada,long int i,long int tamMatri
 }
 
 /**
- * chama a funcao para achar o maior elemento das colunas, caso exista esse elemento
- * faz a troca de linha entre os dois, se nao deixa as linhas como estao
+ * Chama a funcao para achar o maior elemento das colunas, caso exista esse elemento
+ * faz a troca de linha entre os dois, se nao deixa as linhas como estao, e apos isso zera a coluna do pivo
  */
 void pivoteamento(tipo_matriz* mat,long int i, long int tamMatriz){
 	long int novaLinha;
@@ -361,6 +405,9 @@ void pivoteamento(tipo_matriz* mat,long int i, long int tamMatriz){
         
 }
 
+/**
+ * Funcao para copiar os elementos de uma matriz para outra
+ */
 void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz){
 	long int i,j;
 	for(i=0;i<tamMatriz;i++){
@@ -372,12 +419,12 @@ void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz){
 }
 
 /**
- * Chama as funcoes necessarias para resolver a mat por gauss
+ * Chama as funcoes necessarias para resolver a matriz por gauss
  * 
  */
-long int resolve_mat(tipo_matriz* mat,long int tamMatriz){
+void resolve_mat(tipo_matriz* mat,long int tamMatriz){
         long int i;
-        long int vetorLinha[tamMatriz];
+        
         if((verificaLinha(mat,tamMatriz)==1) && (verificaColuna(mat,tamMatriz)==1)){
 			for(i=0;i<tamMatriz-1;i++){
 					pivoteamento(mat,i,tamMatriz); // pivoteia as linhas da mat para zerar as colunas
@@ -385,11 +432,14 @@ long int resolve_mat(tipo_matriz* mat,long int tamMatriz){
         }
 }
 
+/**
+ * imprime o resultado no stdin
+ */
 void imprimeResultado(tipo_matriz *mat,double *norma,long int *numRef,long int tamMatriz){
 	long int i;
 	printf("\n#\n# Norma L2: ");
 	for(i=0;i<tamMatriz;i++){
-		printf("%.16lf ",norma[i]);
+		printf("%.20lf ",norma[i]);
 	}
 	printf("\n# NumRefinamento: ");
 	for(i=0;i<tamMatriz;i++){
@@ -401,11 +451,15 @@ void imprimeResultado(tipo_matriz *mat,double *norma,long int *numRef,long int t
 
 }
 
+
+/**
+ * imprime o resultado no arquivo de saida
+ */
 void escreve_arquivo(FILE *arqSai,double *norma,long int *numRef,tipo_matriz *matrizX,long int tamMatriz){
-	long int i,j;
+	long int i;
 	fprintf(arqSai,"%s","\n#\n# Norma L2: ");
 	for(i=0;i<tamMatriz;i++){
-		fprintf(arqSai,"%.16lf ",norma[i]);
+		fprintf(arqSai,"%.20lf ",norma[i]);
 	}
 	fprintf(arqSai,"\n# NumRefinamento: ");
 	for(i=0;i<tamMatriz;i++){
@@ -415,62 +469,79 @@ void escreve_arquivo(FILE *arqSai,double *norma,long int *numRef,tipo_matriz *ma
 	imprime_mat(arqSai,matrizX,tamMatriz);
 	fprintf(arqSai,"\n");
 	 
-	 
-	 
-	 
 }
 
-long int main(long int argc, char *argv[]){
-    long int saidaArq,tamMatriz,i,j,nRef;
-    int semRefi=1;
-    long double erro=0.0001; // valor padrão definido pelo professor
-    double *norma;
-    long int *numRef;
-    unsigned long int refinamento=0; // valor padrão definido pelo professor
-    char *arquivo_entrada=NULL;
-    char *arquivo_saida=NULL;
+void inicializaVetor(long int *numRef,long int tamMatriz){
+	int i;
+	for(i=0;i<tamMatriz;i++){
+		numRef[i]=0;
+	}
+}
+
+int main(int argc, char *argv[]){
+	unsigned long int refinamento=0; // valor padrão definido
+	long int saidaArq,tamMatriz,nRef; //variaveis que servirao para o controle do programa
+    long int *numRef; // vetor que sera usado caso seja necessario mostrar quantos refinamentos cada coluna teve 
+    
+    int semRefi=1; // caso essa variavel seja igual a 1 a matriz devera fazer refinamento
+    
+    long double erro=0.0001; // valor padrão definido
+    
+    double *norma; //guardara as normas de cada coluna da matriz refinada
+    
+    char *arquivo_entrada=NULL; // variavel que recebera o caminho para o arquivo com a matriz para a leitura
+    char *arquivo_saida=NULL;// variavel que recebera o caminho para o arquivo com a matriz para a escrita
+    
     tipo_matriz* matrizLU = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz LU
     tipo_matriz* matrizA = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz A
     tipo_matriz* matrizX = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz X
-    tipo_matriz* matrizR = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz R
-    FILE *arq=NULL;
-    saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verfica os valores passados por parametro
-    nRef=0;
+    
+    FILE *arq=NULL; //variavel para o uso do arquivo
+    
+    saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verifica os valores passados por parametro
+    
+    nRef=0; // essa variavel sera usada como contador para o numero de refinamentos
+    
     if(saidaArq!=0){
             if(arquivo_entrada!=NULL){
                     arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
             }
+            
+            
             tamMatriz=le_mat(arq,matrizA); //le a mat, seja pelo terminal , ou por um arquivo texto
-            norma=(double *) malloc(sizeof(double)*tamMatriz);
-            numRef=(long int *) malloc(sizeof(long int)*tamMatriz);
-            criaMatriz (matrizLU,tamMatriz);
-            copiaMatriz(matrizA, matrizLU,tamMatriz);
-            criaMatriz (matrizX,tamMatriz);
+            if(arquivo_entrada!=NULL){
+            	fclose(arq); // fecha o arquivo de entrada aberto caso exista
+            }
+            
+            criaMatriz (matrizLU,tamMatriz); // aloca a matriz LU
+            criaMatriz (matrizX,tamMatriz); // aloca a matriz X
+            
+            
+            norma=(double *) malloc(sizeof(double)*tamMatriz); // aloca o vetor de norma
+            numRef=(long int *) malloc(sizeof(long int)*tamMatriz); // aloca o vetor do numero de Refinamento
+            inicializaVetor(numRef,tamMatriz);
+            
+            copiaMatriz(matrizA, matrizLU,tamMatriz); // copia a matriz A para a Matriz LU, para ter a matriz original salva
+            
             resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
-            fatoracaoLU(matrizLU,matrizX,tamMatriz);
-            criaMatriz (matrizR,tamMatriz);
-            multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
-            imprime_mat(NULL,matrizR,tamMatriz);
-            printf("\n");
+            fatoracaoLU(matrizLU,matrizX,tamMatriz); // fatora a matriz no formato Lz=I e Ux=Z
             while(nRef<refinamento){
 
-            	semRefi=refinar(matrizA,matrizX,matrizLU,erro,tamMatriz,norma,numRef);
-            	if(semRefi==0)
+            	semRefi=refinar(matrizA,matrizX,matrizLU,erro,tamMatriz,norma,numRef); // refina a matriz de acordo com os parametros passados
+            	if(semRefi==0) // caso o retorno do refinamento seja igual a zero significa que a matriz não precisa ser mais refinada
             		break;
 
-            	nRef++;
+            	nRef++; // adiciona o contador de refinamento até que ele seja igual ao passado por parametro
             }
             if(arquivo_saida!=NULL){
-            	arq=fopen(arquivo_saida,"w"); 
-            	escreve_arquivo(arq,norma,numRef,matrizX,tamMatriz);
+            	arq=fopen(arquivo_saida,"w"); // abre o arquivo para a escrita
+            	escreve_arquivo(arq,norma,numRef,matrizX,tamMatriz); // escreve no arquivo de saida o resultado das contas
+            	fclose(arq);// fecha o arquivo de saida
             }
             else{
-            	criaMatriz (matrizR,tamMatriz);
-            	multiplicaMatriz(matrizA,matrizX,matrizR,tamMatriz);
-            	imprime_mat(NULL,matrizR,tamMatriz);
-            	printf("\n");
-            	imprimeResultado(matrizX,norma,numRef,tamMatriz);
+            	imprimeResultado(matrizX,norma,numRef,tamMatriz); // imprime o resultado na tela caso não exista o arquivo de saida
+            
             }
     }
-
+    return(0);
 }

@@ -1,0 +1,27 @@
+Nome: Alan Peterson Carvalho da Silva 
+GRR: 20110556
+
+Nome: Rafael Rocha de Carvalho
+GRR: 20104490
+
+Lista de Arquivos:
+	
+	-- apcs11-rrc10 : Diretório com os arquivos .c e .h e o MakeFile do projeto.
+	
+	-- mainTrabalho_ICC.c : Arquivo contendo o Main do projeto.
+		
+	-- functionsICC.h: Header contendo todos os escopos das funções usadas no programa
+
+	-- functionsICC.c: Arquivo contendo as funções que o programa usara para calcular a matriz inversa
+
+	-- MakeFile : Arquivo usado para a compilação do programa
+
+
+Descrição do programa:
+	
+	A estrutura de dados utilizada no algortimo se baseia principalmente em uma Struct chamada tipo_Matriz essa Struct contem dentro dela uma matriz de double e um vetor de linhas, esses elementos permitem obter um controle melhor sobre o processo da inversão da matriz, fazendo que com o vetor de linhas consigamos trocar as linhas de uma matriz sem necessariamente fazer isso na matriz, ou seja, não gasta memória trocando elementos da matriz, deixando assim o código mais eficiente.
+	Foi utilizado uma programação linear, por assim se mostrar mais simples para se implementar e entender.
+	Foram encontradas algumas dificuldades na implentação do refinamento, devido ao grau um pouco mais complexo que o restante do programa para a sua implementação, porêm o mesmo foi resolvido verificando as teorias de refinamento em livros e no material da aula.
+
+Bugs:
+	Nenhum Bug conhecido foi encontrado durante os testes com o programa.

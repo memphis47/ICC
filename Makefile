@@ -1,4 +1,8 @@
-all: Trabalho_ICC.c
-	gcc Trabalho_ICC.c -o invmat -lm -g
+all:
+	gcc Trabalho_ICC.c Functions.c -o invmat -lm -g  
+
 clean:
-	rm invmat
+	rm -f *~
+	rm -f *.o
+	rm -f invmat
+

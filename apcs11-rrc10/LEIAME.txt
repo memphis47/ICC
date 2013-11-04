@@ -19,8 +19,8 @@ Lista de Arquivos:
 
 Descrição do programa:
 	
-	A estrutura de dados utilizada no algortimo se baseia principalmente em uma Struct chamada tipo_Matriz essa Struct contem dentro dela uma matriz de double e um vetor de linhas, esses elementos permitem obter um controle melhor sobre o processo da inversão da matriz, fazendo que com o vetor de linhas consigamos trocar as linhas de uma matriz sem necessariamente fazer isso na matriz, ou seja, não gasta memória trocando elementos da matriz, deixando assim o código mais eficiente.
-	Foi utilizado uma programação linear, por assim se mostrar mais simples para se implementar e entender.
+	A estrutura de dados utilizada no algortimo se baseia principalmente em uma Struct chamada tipo_Matriz essa Struct contem dentro dela uma matriz de double e um vetor de inteiros que representa a ordem das linhas na matriz, chamado de vetorLinha, esses elementos permitem obter um controle melhor sobre o processo da inversão da matriz, fazendo que com esse vetor consigamos trocar as linhas de uma matriz sem necessariamente fazer isso na mesma, ou seja, não gasta memória trocando elementos da matriz, deixando assim o código mais eficiente.
+	Foi utilizado uma programação sem uso de recorrências ou algo mais sofisticado, por assim se mostrar mais simples para se implementar e entender.
 	Foram encontradas algumas dificuldades na implentação do refinamento, devido ao grau um pouco mais complexo que o restante do programa para a sua implementação, porêm o mesmo foi resolvido verificando as teorias de refinamento em livros e no material da aula.
 
 Bugs:

@@ -7,12 +7,25 @@ typedef struct tipo_matriz{
 	long int *vetorLinha;
 }tipo_matriz;
 
+typedef struct StructDados{
+	void *pointer;	//Endereco
+	int size;	//Tamanho
+	int flag;	//Ocupado ou nao
+} Dados;
+
+
+
+void *mialloc (size_t size);
+
+void cipurge ();
+
+void GarbageCollector ();
 
 long int le_parametros(long int argc, char *argv[],long double *erro,unsigned long int *refinamento,char **arquivo_entrada,char **arquivo_saida);
 
 void criaVetorLinha(tipo_matriz* mat,long int tamMatriz);
 
-void criaMatriz(tipo_matriz *mat,long int tamMatriz);
+void criaMatriz(tipo_matriz *mat,long int tamMatriz,int tipo);
 
 void multiplicaMatriz(tipo_matriz* matA,tipo_matriz* matB,tipo_matriz* matR,long int tamMatriz);
 

@@ -4,7 +4,71 @@
 #include <math.h>
 #include "functionsICC.h"
 
+Dados *VetorDados;
+int contador=0;
+int GCcontrol=0;
 
+void *mialloc (size_t size)
+{
+	void *ptr;
+	if (contador)
+	{
+		int i;
+		for (i=0; i<contador; i++)
+		{
+			if ( (VetorDados[i].flag ==0) && (size <= VetorDados[i].size) )
+			{
+				VetorDados[i].flag = 1;
+				return VetorDados[i].pointer;
+			}
+		}
+		VetorDados = (Dados *) realloc (VetorDados, sizeof(Dados)*(contador+1) );
+		ptr = malloc (size);
+		VetorDados[i].pointer = ptr;
+		VetorDados[i].size = size;
+		VetorDados[i].flag = 1;
+		contador++;
+		GCcontrol++;
+		if ( GCcontrol==5 )
+			GarbageCollector();
+		return ptr;
+	}
+	VetorDados = (Dados *) malloc (sizeof(Dados));
+	ptr = malloc (size);
+	VetorDados->pointer = ptr;
+	VetorDados->size = size;
+	VetorDados->flag = 1;
+	contador++;
+	GCcontrol++;
+	if ( GCcontrol==5 )
+		GarbageCollector();
+	return ptr;
+}
+
+void cipurge ()
+{
+	int i;
+	for (i=0; i<contador; i++)
+		free (VetorDados[i].pointer);
+	free (VetorDados);
+	contador=0;
+}
+
+void GarbageCollector ()
+{
+	int i,j;
+	for (i=0; i<contador; i++)
+		if (VetorDados[i].flag==0)
+		{
+			free (VetorDados[i].pointer);
+			for (j=i; j<contador-1; j++)
+				VetorDados[j]=VetorDados[j+1];
+			i--;
+			contador--;
+		}
+	VetorDados = (Dados *) realloc ( VetorDados, sizeof(Dados)*(contador) );
+	GCcontrol=0;
+}
 
 /**
  * le os parametros passados e coloca eles nas variaveis correspondentes
@@ -20,13 +84,13 @@ long int le_parametros(long int argc, char *argv[],long double *erro,unsigned lo
             *refinamento=atoi(argv[i+1]); //recebe o valor do refinamento para o cálculo
         else if(strcmp(argv[i],"-i")==0){
         	while(*arquivo_entrada==NULL){
-        		*arquivo_entrada = malloc (sizeof(char)*strlen(argv[i+1])+1);
+        		*arquivo_entrada = mialloc (sizeof(char)*strlen(argv[i+1])+1);
         	}
         	strcpy(*arquivo_entrada,argv[i+1]); // recebe o caminho do arquivo com a matriz de entrada
         }
         else if(strcmp(argv[i],"-o")==0){
         	while(*arquivo_saida==NULL){
-        		*arquivo_saida = malloc (sizeof(char)*strlen(argv[i+1])+1);
+        		*arquivo_saida = mialloc (sizeof(char)*strlen(argv[i+1])+1);
         	}
         	strcpy(*arquivo_saida,argv[i+1]); //recebe o caminho para o arquivo de saida
         }
@@ -49,7 +113,7 @@ long int le_parametros(long int argc, char *argv[],long double *erro,unsigned lo
  */
 void criaVetorLinha(tipo_matriz* mat,long int tamMatriz){
         long int i;
-        mat->vetorLinha = (long int*)malloc (sizeof(long int)*tamMatriz);
+        mat->vetorLinha = (long int*)mialloc (sizeof(long int)*tamMatriz);
         for(i=0;i<tamMatriz;i++)
                mat->vetorLinha[i]=i; /* cada elemento do vetor sera correspondente 
         							 a um indice que vai de 0 a tamMatriz-1 e que representa uma linha da matriz */
@@ -60,12 +124,13 @@ void criaVetorLinha(tipo_matriz* mat,long int tamMatriz){
 /**
  * aloca a matriz e o chama o alocador do vetor, ambos elementos da Struct tipo_matriz
  */
-void criaMatriz(tipo_matriz *mat,long int tamMatriz){
+void criaMatriz(tipo_matriz *mat,long int tamMatriz,int tipo){
 	long int i,j;
-	criaVetorLinha(mat,tamMatriz);
-	(mat->matriz) = malloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
+	if(tipo==2)
+		criaVetorLinha(mat,tamMatriz);
+	(mat->matriz) = mialloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
     for(i=0;i<tamMatriz;i++){
-        mat->matriz[i] = malloc((sizeof(double))*tamMatriz); // aloca as colunas da matriz
+        mat->matriz[i] = mialloc((sizeof(double))*tamMatriz); // aloca as colunas da matriz
         for(j=0;j<tamMatriz;j++){
         	mat->matriz[i][j]=0.0;
         }
@@ -107,12 +172,11 @@ void imprime_mat(FILE *arq,tipo_matriz* mat,long int tamMatriz){
 /**
  * Funcao para criar a matriz identidade
  */
-void criaIdentidade(tipo_matriz *mat,long int tamMatriz){ 
+void criaIdentidade(tipo_matriz *mat,long int tamMatriz){
 	long int i,j;
-	(mat->matriz) = malloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
-	criaVetorLinha(mat,tamMatriz);
+	(mat->matriz) = mialloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
 	for(i=0;i<tamMatriz;i++){
-		mat->matriz[i] = malloc((sizeof(double))*tamMatriz); // aloca as colunas da mat
+		mat->matriz[i] = mialloc((sizeof(double))*tamMatriz); // aloca as colunas da mat
 		for(j=0;j<tamMatriz;j++){
 				mat->matriz[i][j]=0.0;
 		}
@@ -203,8 +267,8 @@ void calculaX(tipo_matriz *mat, tipo_matriz *matrizX,tipo_matriz *matrizZ,long i
 void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizX,tipo_matriz *matrizResiduo,tipo_matriz *matrizZ,long int tamMatriz){
 	long int i,j,k;
 	double soma;
-	tipo_matriz* matrizAxi = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-	criaMatriz(matrizAxi,tamMatriz);
+	tipo_matriz* matrizAxi = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	criaMatriz(matrizAxi,tamMatriz,1);
 	//Calcula Residuo entre as matrizes
 	multiplicaMatriz(matrizA,matrizX,matrizAxi,tamMatriz);
 	for(k=0;k<tamMatriz;k++){
@@ -213,7 +277,6 @@ void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizX,tipo_matriz *matr
 			matrizResiduo->matriz[i][k]=matrizZ->matriz[i][k]-matrizAxi->matriz[i][k];
 		}
 	}
-	free(matrizAxi);
 }
 
 /**
@@ -246,10 +309,10 @@ void copiaMatrizR(tipo_matriz *matLU,tipo_matriz *mat1,tipo_matriz *mat2,long in
  */
 int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro,long int *numRef){
 	long int j,l,cont;
-	tipo_matriz* matW = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-	criaMatriz(matW,tamMatriz);
-	tipo_matriz* matZ = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-	criaMatriz(matZ,tamMatriz);
+	tipo_matriz* matW = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	criaMatriz(matW,tamMatriz,1);
+	tipo_matriz* matZ = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	criaMatriz(matZ,tamMatriz,1);
 	cont=0;
 	for(j=0;j<tamMatriz;j++){
 		if(norma[j]>erro){ // caso a minha norma seja maior que o meu erro, sera feita a conta Aw=R
@@ -265,8 +328,6 @@ int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long 
 			cont++; // caso não seja o contador de colunas que não precisam ser refinadas sera incrementado
 		}
 	}
-	free(matW);
-	free(matZ);
 	if(cont==tamMatriz-1)
 		return 0; // caso o meu contador tenha o tamanho da matriz entao eu retorno 1 e assim paro o refinamento da matriz
 	else
@@ -282,21 +343,18 @@ int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double e
 	int res;
 	
 
-	tipo_matriz* matrizAxi = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-	tipo_matriz* matrizResiduo = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-	tipo_matriz* matrizId = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+	tipo_matriz* matrizAxi = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	tipo_matriz* matrizResiduo = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	tipo_matriz* matrizId = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
 
-	criaMatriz(matrizResiduo,tamMatriz);
-	criaMatriz(matrizAxi,tamMatriz);
+	criaMatriz(matrizResiduo,tamMatriz,1);
+	criaMatriz(matrizAxi,tamMatriz,1);
 
 	criaIdentidade(matrizId,tamMatriz);
 	calculaResiduo(matA, matX,matrizResiduo, matrizId,tamMatriz);
 	calculaNorma(matrizResiduo,tamMatriz,norma);
 	
 	res=resolveRefinado(matrizResiduo,matLU,matX,tamMatriz,norma,erro,numRef);
-	free(matrizAxi);
-	free(matrizResiduo);
-	free(matrizId);
 	if(res==0) // caso a funcao retorne 0 siginifica que nao existe mais nenhuma coluna para ser refinada
 		return 0;
 	else
@@ -309,10 +367,10 @@ int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double e
 void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,long int tamMatriz){
 	long int k;
 	
-	tipo_matriz* matrizId = (tipo_matriz*) malloc(sizeof(tipo_matriz));
-	tipo_matriz* matrizZ = (tipo_matriz*) malloc(sizeof(tipo_matriz));
+	tipo_matriz* matrizId = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	tipo_matriz* matrizZ = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
 
-	criaMatriz (matrizZ,tamMatriz);
+	criaMatriz (matrizZ,tamMatriz,1);
 	criaIdentidade(matrizId,tamMatriz);
 
 	for(k=0;k<tamMatriz;k++){
@@ -322,8 +380,6 @@ void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,long int tamMatriz){
 		//Calcula U
 		calculaX(mat,matrizX,matrizZ,tamMatriz,k);
 	}
-	free(matrizId);
-	free(matrizZ);
 }
 
 
@@ -342,7 +398,7 @@ long int le_mat(FILE *arq,tipo_matriz* mat){
 			le = arq;
 			fscanf(le,"%ld",&tamMatriz);
 	}
-	criaMatriz(mat,tamMatriz);
+	criaMatriz(mat,tamMatriz,1);
 	for(i=0;i<tamMatriz;i++){
 			for(j=0;j<tamMatriz;j++){
 					fscanf(le,"%lf",&mat->matriz[i][j]); // le tanto do arquivo quanto do terminal a mat

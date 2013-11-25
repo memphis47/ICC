@@ -18,9 +18,9 @@ int main(int argc, char *argv[]){
     char *arquivo_entrada=NULL; // variavel que recebera o caminho para o arquivo com a matriz para a leitura
     char *arquivo_saida=NULL;// variavel que recebera o caminho para o arquivo com a matriz para a escrita
     
-    tipo_matriz* matrizLU = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz LU
-    tipo_matriz* matrizA = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz A
-    tipo_matriz* matrizX = (tipo_matriz*) malloc(sizeof(tipo_matriz));// aloca a matriz X
+    tipo_matriz* matrizLU = (tipo_matriz*) mialloc(sizeof(tipo_matriz));//malloc(sizeof(tipo_matriz));// aloca a matriz LU
+    tipo_matriz* matrizA = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz A
+    tipo_matriz* matrizX = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz X
     
     FILE *arq=NULL; //variavel para o uso do arquivo
     
@@ -39,12 +39,12 @@ int main(int argc, char *argv[]){
             	fclose(arq); // fecha o arquivo de entrada aberto caso exista
             }
             
-            criaMatriz (matrizLU,tamMatriz); // aloca a matriz LU
-            criaMatriz (matrizX,tamMatriz); // aloca a matriz X
+            criaMatriz (matrizLU,tamMatriz,2); // aloca a matriz LU
+            criaMatriz (matrizX,tamMatriz,2); // aloca a matriz X
             
-            norma=(double *) malloc(sizeof(double)*tamMatriz); // aloca o vetor de norma
+            norma=(double *) mialloc(sizeof(double)*tamMatriz);//malloc(sizeof(double)*tamMatriz); // aloca o vetor de norma
             
-            numRef=(long int *) malloc(sizeof(long int)*tamMatriz); // aloca o vetor do numero de Refinamento
+            numRef=(long int *) mialloc(sizeof(long int)*tamMatriz); // aloca o vetor do numero de Refinamento
             inicializaVetor(numRef,tamMatriz);
             
             copiaMatriz(matrizA, matrizLU,tamMatriz); // copia a matriz A para a Matriz LU, para ter a matriz original salva
@@ -71,12 +71,6 @@ int main(int argc, char *argv[]){
             }
     }
     //libera as alocacoes dos vetores e das matrizes
-    free(matrizLU);
-    free(matrizA);
-    free(matrizX);
-    free(norma);
-    free(numRef);
-    free(arquivo_entrada);
-    free(arquivo_saida);
+    cipurge();
     return(0);
 }

@@ -8,6 +8,12 @@ Dados *VetorDados;
 int contador=0;
 int GCcontrol=0;
 
+double timestamp(void){
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return((double)(tp.tv_sec + tp.tv_usec/1000000.0));
+}
+
 void *mialloc (size_t size)
 {
 	void *ptr;
@@ -339,18 +345,18 @@ int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long 
 /**
  * Chama as funcoes para calcular o residuo, calcular a norma e resolver o refinamento
  */
-int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double erro,long int tamMatriz,double *norma,long int *numRef){
+int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,tipo_matriz *matrizId,long double erro,long int tamMatriz,double *norma,long int *numRef){
 	int res;
 	
 
 	tipo_matriz* matrizAxi = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
 	tipo_matriz* matrizResiduo = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
-	tipo_matriz* matrizId = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	
 
 	criaMatriz(matrizResiduo,tamMatriz,1);
 	criaMatriz(matrizAxi,tamMatriz,1);
 
-	criaIdentidade(matrizId,tamMatriz);
+	//criaIdentidade(matrizId,tamMatriz);
 	calculaResiduo(matA, matX,matrizResiduo, matrizId,tamMatriz);
 	calculaNorma(matrizResiduo,tamMatriz,norma);
 	
@@ -364,14 +370,12 @@ int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,long double e
 /**
  *  Funcao para fatorar a matriz LU no formato Lz=I e Ux=Z
  */
-void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,long int tamMatriz){
+void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,tipo_matriz *matrizId,long int tamMatriz){
 	long int k;
 	
-	tipo_matriz* matrizId = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
 	tipo_matriz* matrizZ = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
 
 	criaMatriz (matrizZ,tamMatriz,1);
-	criaIdentidade(matrizId,tamMatriz);
 
 	for(k=0;k<tamMatriz;k++){
 		// calcula L
@@ -501,9 +505,11 @@ void resolve_mat(tipo_matriz* mat,long int tamMatriz){
  */
 void imprimeResultado(tipo_matriz *mat,double *norma,long int *numRef,long int tamMatriz){
 	long int i;
-	printf("#\n# Norma L2: ");
-	for(i=0;i<tamMatriz;i++){
-		printf("%.20lf ",norma[i]);
+	if(norma!=NULL){
+		printf("#\n# Norma L2: ");
+		for(i=0;i<tamMatriz;i++){
+			printf("%.20lf ",norma[i]);
+		}
 	}
 	printf("\n# NumRefinamento: ");
 	for(i=0;i<tamMatriz;i++){
@@ -521,9 +527,11 @@ void imprimeResultado(tipo_matriz *mat,double *norma,long int *numRef,long int t
  */
 void escreve_arquivo(FILE *arqSai,double *norma,long int *numRef,tipo_matriz *matrizX,long int tamMatriz){
 	long int i;
-	fprintf(arqSai,"%s","#\n# Norma L2: ");
-	for(i=0;i<tamMatriz;i++){
-		fprintf(arqSai,"%.20lf ",norma[i]);
+	if(norma!=NULL){
+		fprintf(arqSai,"%s","#\n# Norma L2: ");
+		for(i=0;i<tamMatriz;i++){
+			fprintf(arqSai,"%.20lf ",norma[i]);
+		}
 	}
 	fprintf(arqSai,"\n# NumRefinamento: ");
 	for(i=0;i<tamMatriz;i++){

@@ -6,14 +6,14 @@
 
 int main(int argc, char *argv[]){
 	unsigned long int refinamento=0; // valor padrão definido
-	long int saidaArq,tamMatriz,nRef; //variaveis que servirao para o controle do programa
+	long int saidaArq,tamMatriz,nRef,i; //variaveis que servirao para o controle do programa
     long int *numRef; // vetor que sera usado caso seja necessario mostrar quantos refinamentos cada coluna teve 
     
     int semRefi=1; // caso essa variavel seja igual a 1 a matriz devera fazer refinamento
     
     long double erro=0.0001; // valor padrão definido
     
-    double *norma; //guardara as normas de cada coluna da matriz refinada
+    double *norma=NULL; //guardara as normas de cada coluna da matriz refinada
     
     char *arquivo_entrada=NULL; // variavel que recebera o caminho para o arquivo com a matriz para a leitura
     char *arquivo_saida=NULL;// variavel que recebera o caminho para o arquivo com a matriz para a escrita
@@ -21,6 +21,7 @@ int main(int argc, char *argv[]){
     tipo_matriz* matrizLU = (tipo_matriz*) mialloc(sizeof(tipo_matriz));//malloc(sizeof(tipo_matriz));// aloca a matriz LU
     tipo_matriz* matrizA = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz A
     tipo_matriz* matrizX = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz X
+    tipo_matriz* matrizId = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz Identidade
     
     FILE *arq=NULL; //variavel para o uso do arquivo
     
@@ -41,25 +42,30 @@ int main(int argc, char *argv[]){
             
             criaMatriz (matrizLU,tamMatriz,2); // aloca a matriz LU
             criaMatriz (matrizX,tamMatriz,2); // aloca a matriz X
+            criaMatriz (matrizId,tamMatriz,1);//aloca a identidade
             
             norma=(double *) mialloc(sizeof(double)*tamMatriz);//malloc(sizeof(double)*tamMatriz); // aloca o vetor de norma
             
+            memset(norma,0,tamMatriz*sizeof(double));//inicializa o vetor
+            
             numRef=(long int *) mialloc(sizeof(long int)*tamMatriz); // aloca o vetor do numero de Refinamento
+            
             inicializaVetor(numRef,tamMatriz);
             
             copiaMatriz(matrizA, matrizLU,tamMatriz); // copia a matriz A para a Matriz LU, para ter a matriz original salva
             
             resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
-            fatoracaoLU(matrizLU,matrizX,tamMatriz); // fatora a matriz no formato Lz=I e Ux=Z
+            fatoracaoLU(matrizLU,matrizX,matrizId,tamMatriz); // fatora a matriz no formato Lz=I e Ux=Z
             
             while(nRef<refinamento){
 
-            	semRefi=refinar(matrizA,matrizX,matrizLU,erro,tamMatriz,norma,numRef); // refina a matriz de acordo com os parametros passados
+            	semRefi=refinar(matrizA,matrizX,matrizLU,matrizId,erro,tamMatriz,norma,numRef); // refina a matriz de acordo com os parametros passados
             	if(semRefi==0) // caso o retorno do refinamento seja igual a zero significa que a matriz não precisa ser mais refinada
             		break;
 
             	nRef++; // adiciona o contador de refinamento até que ele seja igual ao passado por parametro
             }
+            
             if(arquivo_saida!=NULL){
             	arq=fopen(arquivo_saida,"w"); // abre o arquivo para a escrita
             	escreve_arquivo(arq,norma,numRef,matrizX,tamMatriz); // escreve no arquivo de saida o resultado das contas

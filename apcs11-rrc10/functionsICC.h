@@ -41,17 +41,17 @@ void calculaZ(tipo_matriz *mat, tipo_matriz *matrizZ,tipo_matriz *matrizB,long i
 
 void calculaX(tipo_matriz *mat, tipo_matriz *matrizX,tipo_matriz *matrizZ,long int tamMatriz,long int k);
 
-void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizX,tipo_matriz *matrizResiduo,tipo_matriz *matrizZ,long int tamMatriz);
+void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizAxi, tipo_matriz *matrizX,tipo_matriz *matrizResiduo,tipo_matriz *matrizZ,long int tamMatriz);
 
 void calculaNorma(tipo_matriz *mat,long int tamMatriz,double *norma);
 
 void copiaMatrizR(tipo_matriz *matLU,tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz,long int col);
 
-int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro,long int *numRef);
+int resolveRefinado(tipo_matriz *matR,tipo_matriz *matW,tipo_matriz *matZ,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro,long int *numRef);
 
-int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,tipo_matriz *matrizId,long double erro,long int tamMatriz,double *norma,long int *numRef);
+int refinar(tipo_matriz *matA, tipo_matriz *matrizResiduo, tipo_matriz *matrizW,tipo_matriz *matrizZ,tipo_matriz *matAxi,tipo_matriz *matX,tipo_matriz *matLU,tipo_matriz *matrizId,long double erro,long int tamMatriz,double *norma,long int *numRef);
 
-void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,tipo_matriz *matrizId,long int tamMatriz);
+void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizZ,tipo_matriz *matrizX,tipo_matriz *matrizId,long int tamMatriz);
 
 long int le_mat(FILE *arq,tipo_matriz* mat);
 

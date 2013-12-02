@@ -28,7 +28,7 @@ void *mialloc (size_t size)
 				return VetorDados[i].pointer;
 			}
 		}
-		VetorDados = (Dados *) realloc (VetorDados, sizeof(Dados)*(contador+1) );
+		VetorDados = (Dados *) malloc (VetorDados, (8*tamMatriz)+12);
 		ptr = malloc (size);
 		VetorDados[i].pointer = ptr;
 		VetorDados[i].size = size;
@@ -270,11 +270,9 @@ void calculaX(tipo_matriz *mat, tipo_matriz *matrizX,tipo_matriz *matrizZ,long i
 /**
  * Funcao para calcular o residuo entre a matriz identidade e a matriz AX
  */
-void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizX,tipo_matriz *matrizResiduo,tipo_matriz *matrizZ,long int tamMatriz){
+void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizAxi, tipo_matriz *matrizX,tipo_matriz *matrizResiduo,tipo_matriz *matrizZ,long int tamMatriz){
 	long int i,j,k;
 	double soma;
-	tipo_matriz* matrizAxi = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
-	criaMatriz(matrizAxi,tamMatriz,1);
 	//Calcula Residuo entre as matrizes
 	multiplicaMatriz(matrizA,matrizX,matrizAxi,tamMatriz);
 	for(k=0;k<tamMatriz;k++){
@@ -313,12 +311,8 @@ void copiaMatrizR(tipo_matriz *matLU,tipo_matriz *mat1,tipo_matriz *mat2,long in
 /**
  * Resolve a conta da matriz refinada ou seja Aw=R
  */
-int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro,long int *numRef){
+int resolveRefinado(tipo_matriz *matR,tipo_matriz *matW,tipo_matriz *matZ,tipo_matriz *matLU,tipo_matriz *matX,long int tamMatriz,double *norma,long double erro,long int *numRef){
 	long int j,l,cont;
-	tipo_matriz* matW = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
-	criaMatriz(matW,tamMatriz,1);
-	tipo_matriz* matZ = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
-	criaMatriz(matZ,tamMatriz,1);
 	cont=0;
 	for(j=0;j<tamMatriz;j++){
 		if(norma[j]>erro){ // caso a minha norma seja maior que o meu erro, sera feita a conta Aw=R
@@ -345,22 +339,14 @@ int resolveRefinado(tipo_matriz *matR,tipo_matriz *matLU,tipo_matriz *matX,long 
 /**
  * Chama as funcoes para calcular o residuo, calcular a norma e resolver o refinamento
  */
-int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,tipo_matriz *matrizId,long double erro,long int tamMatriz,double *norma,long int *numRef){
+int refinar(tipo_matriz *matA, tipo_matriz *matrizResiduo, tipo_matriz *matrizW, tipo_matriz *matrizZ, tipo_matriz *matAxi, tipo_matriz *matX,tipo_matriz *matLU,tipo_matriz *matrizId,long double erro,long int tamMatriz,double *norma,long int *numRef){
 	int res;
-	
-
-	tipo_matriz* matrizAxi = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
-	tipo_matriz* matrizResiduo = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
-	
-
-	criaMatriz(matrizResiduo,tamMatriz,1);
-	criaMatriz(matrizAxi,tamMatriz,1);
 
 	//criaIdentidade(matrizId,tamMatriz);
-	calculaResiduo(matA, matX,matrizResiduo, matrizId,tamMatriz);
+	calculaResiduo(matA, matAxi, matX,matrizResiduo, matrizId,tamMatriz);
 	calculaNorma(matrizResiduo,tamMatriz,norma);
 	
-	res=resolveRefinado(matrizResiduo,matLU,matX,tamMatriz,norma,erro,numRef);
+	res=resolveRefinado(matrizResiduo,matrizW,matrizZ,matLU,matX,tamMatriz,norma,erro,numRef);
 	if(res==0) // caso a funcao retorne 0 siginifica que nao existe mais nenhuma coluna para ser refinada
 		return 0;
 	else
@@ -370,13 +356,8 @@ int refinar(tipo_matriz *matA,tipo_matriz *matX,tipo_matriz *matLU,tipo_matriz *
 /**
  *  Funcao para fatorar a matriz LU no formato Lz=I e Ux=Z
  */
-void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizX,tipo_matriz *matrizId,long int tamMatriz){
+void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizZ,tipo_matriz *matrizX,tipo_matriz *matrizId,long int tamMatriz){
 	long int k;
-	
-	tipo_matriz* matrizZ = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
-
-	criaMatriz (matrizZ,tamMatriz,1);
-
 	for(k=0;k<tamMatriz;k++){
 		// calcula L
 		calculaZ(mat,matrizZ,matrizId,tamMatriz,k);

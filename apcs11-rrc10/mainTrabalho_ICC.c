@@ -22,6 +22,11 @@ int main(int argc, char *argv[]){
     tipo_matriz* matrizA = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz A
     tipo_matriz* matrizX = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz X
     tipo_matriz* matrizId = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz Identidade
+   	tipo_matriz* matrizAxi = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+   	
+   	tipo_matriz* matrizW = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	tipo_matriz* matrizZ = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	tipo_matriz* matrizResiduo = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
     
     FILE *arq=NULL; //variavel para o uso do arquivo
     
@@ -42,7 +47,11 @@ int main(int argc, char *argv[]){
             
             criaMatriz (matrizLU,tamMatriz,2); // aloca a matriz LU
             criaMatriz (matrizX,tamMatriz,2); // aloca a matriz X
-            criaMatriz (matrizId,tamMatriz,1);//aloca a identidade
+            criaIdentidade (matrizId,tamMatriz); //aloca a identidade
+           	criaMatriz(matrizAxi,tamMatriz,1); // aloca a matriz de resultados refinados
+            criaMatriz(matrizZ,tamMatriz,1);
+            criaMatriz(matrizW,tamMatriz,1);
+            criaMatriz(matrizResiduo,tamMatriz,1);
             
             norma=(double *) mialloc(sizeof(double)*tamMatriz);//malloc(sizeof(double)*tamMatriz); // aloca o vetor de norma
             
@@ -55,11 +64,11 @@ int main(int argc, char *argv[]){
             copiaMatriz(matrizA, matrizLU,tamMatriz); // copia a matriz A para a Matriz LU, para ter a matriz original salva
             
             resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
-            fatoracaoLU(matrizLU,matrizX,matrizId,tamMatriz); // fatora a matriz no formato Lz=I e Ux=Z
+            fatoracaoLU(matrizLU,matrizZ,matrizX,matrizId,tamMatriz); // fatora a matriz no formato Lz=I e Ux=Z
             
             while(nRef<refinamento){
 
-            	semRefi=refinar(matrizA,matrizX,matrizLU,matrizId,erro,tamMatriz,norma,numRef); // refina a matriz de acordo com os parametros passados
+            	semRefi=refinar(matrizA,matrizResiduo,matrizW,matrizZ,matrizAxi,matrizX,matrizLU,matrizId,erro,tamMatriz,norma,numRef); // refina a matriz de acordo com os parametros passados
             	if(semRefi==0) // caso o retorno do refinamento seja igual a zero significa que a matriz não precisa ser mais refinada
             		break;
 

@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[]){
 	unsigned long int refinamento=0; // valor padrão definido
-	long int saidaArq,tamMatriz,nRef,i; //variaveis que servirao para o controle do programa
+	long int saidaArq,tamMatriz,nRef; //variaveis que servirao para o controle do programa
     long int *numRef; // vetor que sera usado caso seja necessario mostrar quantos refinamentos cada coluna teve 
     
     int semRefi=1; // caso essa variavel seja igual a 1 a matriz devera fazer refinamento
@@ -17,30 +17,38 @@ int main(int argc, char *argv[]){
     
     char *arquivo_entrada=NULL; // variavel que recebera o caminho para o arquivo com a matriz para a leitura
     char *arquivo_saida=NULL;// variavel que recebera o caminho para o arquivo com a matriz para a escrita
-    
-    tipo_matriz* matrizLU = (tipo_matriz*) mialloc(sizeof(tipo_matriz));//malloc(sizeof(tipo_matriz));// aloca a matriz LU
-    tipo_matriz* matrizA = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz A
-    tipo_matriz* matrizX = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz X
-    tipo_matriz* matrizId = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz Identidade
-   	tipo_matriz* matrizAxi = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
-   	
-   	tipo_matriz* matrizW = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+	FILE *arq=NULL; //variavel para o uso do arquivo
+
+	saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verifica os valores passados por parametro
+	    if(arquivo_entrada!=NULL){
+		            arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
+	    }
+	tamMatriz=leTam(arq);
+	//tamMatriz=32;
+	inicVetorDados((11*tamMatriz)+12);
+	tipo_matriz* matrizLU = (tipo_matriz*) mialloc(sizeof(tipo_matriz));//malloc(sizeof(tipo_matriz));// aloca a matriz LU
+	tipo_matriz* matrizA = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz A
+	tipo_matriz* matrizX = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz X
+	tipo_matriz* matrizId = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz Identidade
+	tipo_matriz* matrizAxi = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
+
+	tipo_matriz* matrizW = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
 	tipo_matriz* matrizZ = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
 	tipo_matriz* matrizResiduo = (tipo_matriz*) mialloc(sizeof(tipo_matriz));
     
-    FILE *arq=NULL; //variavel para o uso do arquivo
     
-    saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verifica os valores passados por parametro
+    
+    
     
     nRef=0; // essa variavel sera usada como contador para o numero de refinamentos
     
     if(saidaArq!=0){
-            if(arquivo_entrada!=NULL){
-                    arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
-            }
             
             
-            tamMatriz=le_mat(arq,matrizA); //le a mat, seja pelo terminal , ou por um arquivo texto
+            //srand( 201302 );
+            le_mat(arq,matrizA,tamMatriz); //le a mat, seja pelo terminal , ou por um arquivo texto
+			//criaMatriz(matrizA,tamMatriz,1);
+			//matrizA->matriz=generateSquareRandomMatrix(32);
             if(arquivo_entrada!=NULL){
             	fclose(arq); // fecha o arquivo de entrada aberto caso exista
             }
@@ -87,5 +95,7 @@ int main(int argc, char *argv[]){
     }
     //libera as alocacoes dos vetores e das matrizes
     cipurge();
+	free(arquivo_entrada);
+	free(arquivo_saida);
     return(0);
 }

@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/time.h>
 #include "functionsICC.h"
 
-Dados *VetorDados;
+void **VetorDados;
 int contador=0;
 int GCcontrol=0;
+
 
 double timestamp(void){
     struct timeval tp;
@@ -14,66 +16,42 @@ double timestamp(void){
     return((double)(tp.tv_sec + tp.tv_usec/1000000.0));
 }
 
+void inicVetorDados(long int tamDados){
+     VetorDados = malloc (sizeof(void*)*tamDados);
+}
+
 void *mialloc (size_t size)
 {
-	void *ptr;
-	if (contador)
-	{
-		int i;
-		for (i=0; i<contador; i++)
-		{
-			if ( (VetorDados[i].flag ==0) && (size <= VetorDados[i].size) )
-			{
-				VetorDados[i].flag = 1;
-				return VetorDados[i].pointer;
-			}
-		}
-		VetorDados = (Dados *) malloc (VetorDados, (8*tamMatriz)+12);
-		ptr = malloc (size);
-		VetorDados[i].pointer = ptr;
-		VetorDados[i].size = size;
-		VetorDados[i].flag = 1;
-		contador++;
-		GCcontrol++;
-		if ( GCcontrol==5 )
-			GarbageCollector();
-		return ptr;
-	}
-	VetorDados = (Dados *) malloc (sizeof(Dados));
-	ptr = malloc (size);
-	VetorDados->pointer = ptr;
-	VetorDados->size = size;
-	VetorDados->flag = 1;
+	//void *ptr;
+	//VetorDados = (Dados *) malloc (VetorDados, (8*tamMatriz)+12);
+	
+	VetorDados[contador]= malloc (size);
 	contador++;
-	GCcontrol++;
-	if ( GCcontrol==5 )
-		GarbageCollector();
-	return ptr;
+	return VetorDados[contador-1];
 }
 
 void cipurge ()
 {
 	int i;
 	for (i=0; i<contador; i++)
-		free (VetorDados[i].pointer);
+		free (VetorDados[i]);
 	free (VetorDados);
 	contador=0;
 }
 
-void GarbageCollector ()
-{
-	int i,j;
-	for (i=0; i<contador; i++)
-		if (VetorDados[i].flag==0)
-		{
-			free (VetorDados[i].pointer);
-			for (j=i; j<contador-1; j++)
-				VetorDados[j]=VetorDados[j+1];
-			i--;
-			contador--;
-		}
-	VetorDados = (Dados *) realloc ( VetorDados, sizeof(Dados)*(contador) );
-	GCcontrol=0;
+
+long int leTam(FILE *arq){
+	FILE *le;
+	long int tamMatriz;
+	if(arq==NULL){ // caso não exista o arquivo de entrada, a ordem da mat sera lida pelo terminal
+			le = stdin;
+			fscanf(le,"%ld",&tamMatriz);
+	}
+	else{ // caso exista o arquivo de entrada, a ordem da mat sera lido da primeira linha do arquivo
+			le = arq;
+			fscanf(le,"%ld",&tamMatriz);
+	}
+	return tamMatriz;
 }
 
 /**
@@ -89,14 +67,15 @@ long int le_parametros(long int argc, char *argv[],long double *erro,unsigned lo
         else if(strcmp(argv[i],"-r")==0)
             *refinamento=atoi(argv[i+1]); //recebe o valor do refinamento para o cálculo
         else if(strcmp(argv[i],"-i")==0){
+		
         	while(*arquivo_entrada==NULL){
-        		*arquivo_entrada = mialloc (sizeof(char)*strlen(argv[i+1])+1);
+        		*arquivo_entrada = malloc (sizeof(char)*strlen(argv[i+1])+1);
         	}
         	strcpy(*arquivo_entrada,argv[i+1]); // recebe o caminho do arquivo com a matriz de entrada
         }
         else if(strcmp(argv[i],"-o")==0){
         	while(*arquivo_saida==NULL){
-        		*arquivo_saida = mialloc (sizeof(char)*strlen(argv[i+1])+1);
+        		*arquivo_saida = malloc (sizeof(char)*strlen(argv[i+1])+1);
         	}
         	strcpy(*arquivo_saida,argv[i+1]); //recebe o caminho para o arquivo de saida
         }
@@ -135,11 +114,11 @@ void criaMatriz(tipo_matriz *mat,long int tamMatriz,int tipo){
 	if(tipo==2)
 		criaVetorLinha(mat,tamMatriz);
 	(mat->matriz) = mialloc((sizeof(double *))*tamMatriz); // aloca a mat no tamanho passado para a ordem
-    for(i=0;i<tamMatriz;i++){
-        mat->matriz[i] = mialloc((sizeof(double))*tamMatriz); // aloca as colunas da matriz
-        for(j=0;j<tamMatriz;j++){
-        	mat->matriz[i][j]=0.0;
-        }
+	for(i=0;i<tamMatriz;i++){
+		mat->matriz[i] = mialloc((sizeof(double))*tamMatriz); // aloca as linhas da matriz
+		for(j=0;j<tamMatriz;j++){
+			mat->matriz[i][j]=0.0;
+		}
 	}
 }
 
@@ -271,8 +250,7 @@ void calculaX(tipo_matriz *mat, tipo_matriz *matrizX,tipo_matriz *matrizZ,long i
  * Funcao para calcular o residuo entre a matriz identidade e a matriz AX
  */
 void calculaResiduo(tipo_matriz *matrizA, tipo_matriz *matrizAxi, tipo_matriz *matrizX,tipo_matriz *matrizResiduo,tipo_matriz *matrizZ,long int tamMatriz){
-	long int i,j,k;
-	double soma;
+	long int i,k;
 	//Calcula Residuo entre as matrizes
 	multiplicaMatriz(matrizA,matrizX,matrizAxi,tamMatriz);
 	for(k=0;k<tamMatriz;k++){
@@ -372,24 +350,23 @@ void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizZ,tipo_matriz *matrizX,tipo
  * Funcao para ler a matriz usando arq como parametro para saber se existe um arquivo para ler
  * ou se sera usado o terminal para a leitura da mat
  */
-long int le_mat(FILE *arq,tipo_matriz* mat){
-	long int i,j,tamMatriz;
+void le_mat(FILE *arq,tipo_matriz* mat,long int tamMatriz){
+	long int i,j;
 	FILE *le;
 	if(arq==NULL){ // caso não exista o arquivo de entrada, a ordem da mat sera lida pelo terminal
 			le = stdin;
-			fscanf(le,"%ld",&tamMatriz);
 	}
 	else{ // caso exista o arquivo de entrada, a ordem da mat sera lido da primeira linha do arquivo
 			le = arq;
-			fscanf(le,"%ld",&tamMatriz);
 	}
+
 	criaMatriz(mat,tamMatriz,1);
 	for(i=0;i<tamMatriz;i++){
 			for(j=0;j<tamMatriz;j++){
 					fscanf(le,"%lf",&mat->matriz[i][j]); // le tanto do arquivo quanto do terminal a mat
 			}
 	}
-	return tamMatriz;
+	//return tamMatriz;
 }
 
 
@@ -528,4 +505,26 @@ void inicializaVetor(long int *numRef,long int tamMatriz){
 	for(i=0;i<tamMatriz;i++){
 		numRef[i]=0;
 	}
+}
+
+
+double *generateSquareRandomMatrix( unsigned int n )
+{
+   double *mat = NULL;
+
+   /* return NULL if memory allocation fails */
+   if ( ! (mat = (double *) malloc(n*n*sizeof(double))) )
+      return (NULL);
+
+   /* generate a randomly initialized matrix in line-major mode */
+   double *ptr = mat;
+   double *end = mat + n*n;
+
+   double invRandMax = 1.0/(double)RAND_MAX;
+
+   while( ptr != end ) {
+      *ptr++ = (double)rand() * invRandMax;
+   }
+
+   return (mat);
 }

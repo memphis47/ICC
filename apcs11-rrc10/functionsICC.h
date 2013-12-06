@@ -13,11 +13,15 @@ typedef struct StructDados{
 	int flag;	//Ocupado ou nao
 } Dados;
 
+void inicVetorDados(long int tamDados);
+
 double timestamp(void);
 
 void *mialloc (size_t size);
 
 void cipurge ();
+
+long int leTam(FILE *arq);
 
 void GarbageCollector ();
 
@@ -53,7 +57,7 @@ int refinar(tipo_matriz *matA, tipo_matriz *matrizResiduo, tipo_matriz *matrizW,
 
 void fatoracaoLU(tipo_matriz *mat,tipo_matriz *matrizZ,tipo_matriz *matrizX,tipo_matriz *matrizId,long int tamMatriz);
 
-long int le_mat(FILE *arq,tipo_matriz* mat);
+void le_mat(FILE *arq,tipo_matriz* mat,long int tamMatriz);
 
 long int procuraMaior(tipo_matriz* mat,long int i, long int tamMatriz);
 
@@ -66,6 +70,8 @@ void pivoteamento(tipo_matriz* mat,long int i, long int tamMatriz);
 void copiaMatriz(tipo_matriz *mat1,tipo_matriz *mat2,long int tamMatriz);
 
 void resolve_mat(tipo_matriz* mat,long int tamMatriz);
+
+double *generateSquareRandomMatrix( unsigned int n );
 
 void imprimeResultado(tipo_matriz *mat,double *norma,long int *numRef,long int tamMatriz);
 

@@ -1,0 +1,27 @@
+-------------------------------------------------------------
+-------------------------------------------------------------
+CPU type:	Intel Core SandyBridge processor 
+CPU clock:	2.49 GHz 
+Measuring group FLOPS_DP
+-------------------------------------------------------------
+./invmat -i matriz256.txt -o output.txt
++--------------------------------------+-------------+
+|                Event                 |   core 0    |
++--------------------------------------+-------------+
+|          INSTR_RETIRED_ANY           | 4.49692e+08 |
+|        CPU_CLK_UNHALTED_CORE         | 2.10484e+08 |
+|         CPU_CLK_UNHALTED_REF         | 1.79352e+08 |
+| FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE | 5.57303e+06 |
+| FP_COMP_OPS_EXE_SSE_FP_SCALAR_DOUBLE | 4.14558e+07 |
++--------------------------------------+-------------+
++----------------------+-----------+
+|        Metric        |  core 0   |
++----------------------+-----------+
+| Runtime (RDTSC) [s]  | 0.0800425 |
+| Runtime unhalted [s] | 0.0843855 |
+|     Clock [MHz]      |  2927.29  |
+|         CPI          | 0.468063  |
+|       MFlops/s       |  657.175  |
+|    Packed MUOPS/s    |  69.6259  |
+|    Scalar MUOPS/s    |  517.923  |
++----------------------+-----------+

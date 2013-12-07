@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+//#include <likwid.h>
 #include "functionsICC.h"
 
 int main(int argc, char *argv[]){
@@ -14,17 +15,16 @@ int main(int argc, char *argv[]){
     long double erro=0.0001; // valor padrão definido
     
     double *norma=NULL; //guardara as normas de cada coluna da matriz refinada
-    
+    double temp1,temp2;
     char *arquivo_entrada=NULL; // variavel que recebera o caminho para o arquivo com a matriz para a leitura
     char *arquivo_saida=NULL;// variavel que recebera o caminho para o arquivo com a matriz para a escrita
 	FILE *arq=NULL; //variavel para o uso do arquivo
-
+	FILE *res=NULL;
 	saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verifica os valores passados por parametro
 	    if(arquivo_entrada!=NULL){
 		            arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
 	    }
 	tamMatriz=leTam(arq);
-	//tamMatriz=32;
 	inicVetorDados((11*tamMatriz)+12);
 	tipo_matriz* matrizLU = (tipo_matriz*) mialloc(sizeof(tipo_matriz));//malloc(sizeof(tipo_matriz));// aloca a matriz LU
 	tipo_matriz* matrizA = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz A
@@ -43,12 +43,9 @@ int main(int argc, char *argv[]){
     nRef=0; // essa variavel sera usada como contador para o numero de refinamentos
     
     if(saidaArq!=0){
-            
-            
-            //srand( 201302 );
+           
             le_mat(arq,matrizA,tamMatriz); //le a mat, seja pelo terminal , ou por um arquivo texto
-			//criaMatriz(matrizA,tamMatriz,1);
-			//matrizA->matriz=generateSquareRandomMatrix(32);
+			
             if(arquivo_entrada!=NULL){
             	fclose(arq); // fecha o arquivo de entrada aberto caso exista
             }
@@ -70,10 +67,23 @@ int main(int argc, char *argv[]){
             inicializaVetor(numRef,tamMatriz);
             
             copiaMatriz(matrizA, matrizLU,tamMatriz); // copia a matriz A para a Matriz LU, para ter a matriz original salva
-            
+			res=fopen("resultadoSemRefinamentoLIKWID.txt","a+");
+			fprintf(res,"Matriz de tamanho %ld:\n",tamMatriz);
+			temp1=timestamp();
+			//likwid_markerInit();
+			//likwid_markerStartRegion("Compute");            
             resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
-            fatoracaoLU(matrizLU,matrizZ,matrizX,matrizId,tamMatriz); // fatora a matriz no formato Lz=I e Ux=Z
-            
+			//likwid_markerStopRegion("Compute");
+			//likwid_markerClose();
+	        temp2=timestamp()-temp1;
+			fprintf(res,"\tCriacao da LU:%lf seg\n",temp2);
+			temp1=0.0;
+			temp2=0.0;
+			temp1=timestamp();            
+			fatoracaoLU(matrizLU,matrizZ,matrizX,matrizId,tamMatriz); // fatora a matriz no formato Lz=I e Ux=Z
+			temp2=timestamp()-temp1;
+			fprintf(res,"\tFatoração da LU:%lf seg\n\n",temp2);	
+			fclose(res);		            
             while(nRef<refinamento){
 
             	semRefi=refinar(matrizA,matrizResiduo,matrizW,matrizZ,matrizAxi,matrizX,matrizLU,matrizId,erro,tamMatriz,norma,numRef); // refina a matriz de acordo com os parametros passados

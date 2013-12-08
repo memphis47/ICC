@@ -15,17 +15,17 @@ int main(int argc, char *argv[]){
     long double erro=0.0001; // valor padrão definido
     
     double *norma=NULL; //guardara as normas de cada coluna da matriz refinada
-    double temp1,temp2;
+   // double temp1,temp2;
     char *arquivo_entrada=NULL; // variavel que recebera o caminho para o arquivo com a matriz para a leitura
     char *arquivo_saida=NULL;// variavel que recebera o caminho para o arquivo com a matriz para a escrita
 	FILE *arq=NULL; //variavel para o uso do arquivo
-	FILE *res=NULL;
+	//FILE *res=NULL;
 	saidaArq=le_parametros(argc,argv,&erro,&refinamento,&arquivo_entrada,&arquivo_saida); // verifica os valores passados por parametro
 	    if(arquivo_entrada!=NULL){
 		            arq=fopen(arquivo_entrada,"r"); // caso exista arquivo de entrada , abre ele para ler a mat
 	    }
 	tamMatriz=leTam(arq);
-	inicVetorDados((11*tamMatriz)+12);
+	inicVetorDados((11*tamMatriz)+11);
 	tipo_matriz* matrizLU = (tipo_matriz*) mialloc(sizeof(tipo_matriz));//malloc(sizeof(tipo_matriz));// aloca a matriz LU
 	tipo_matriz* matrizA = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz A
 	tipo_matriz* matrizX = (tipo_matriz*) mialloc(sizeof(tipo_matriz));// aloca a matriz X
@@ -67,23 +67,11 @@ int main(int argc, char *argv[]){
             inicializaVetor(numRef,tamMatriz);
             
             copiaMatriz(matrizA, matrizLU,tamMatriz); // copia a matriz A para a Matriz LU, para ter a matriz original salva
-			res=fopen("resultadoSemRefinamentoLIKWID.txt","a+");
-			fprintf(res,"Matriz de tamanho %ld:\n",tamMatriz);
-			temp1=timestamp();
-			//likwid_markerInit();
-			//likwid_markerStartRegion("Compute");            
+			           
             resolve_mat(matrizLU,tamMatriz); // resolve a matriz por gauss
-			//likwid_markerStopRegion("Compute");
-			//likwid_markerClose();
-	        temp2=timestamp()-temp1;
-			fprintf(res,"\tCriacao da LU:%lf seg\n",temp2);
-			temp1=0.0;
-			temp2=0.0;
-			temp1=timestamp();            
+			            
 			fatoracaoLU(matrizLU,matrizZ,matrizX,matrizId,tamMatriz); // fatora a matriz no formato Lz=I e Ux=Z
-			temp2=timestamp()-temp1;
-			fprintf(res,"\tFatoração da LU:%lf seg\n\n",temp2);	
-			fclose(res);		            
+			
             while(nRef<refinamento){
 
             	semRefi=refinar(matrizA,matrizResiduo,matrizW,matrizZ,matrizAxi,matrizX,matrizLU,matrizId,erro,tamMatriz,norma,numRef); // refina a matriz de acordo com os parametros passados
@@ -102,6 +90,9 @@ int main(int argc, char *argv[]){
             	imprimeResultado(matrizX,norma,numRef,tamMatriz); // imprime o resultado na tela caso não exista o arquivo de saida
             
             }
+			//temp2=timestamp()-temp1;
+			//fprintf(res,"\tRefinamento:%lf seg\n\n",temp2);	
+			//fclose(res);
     }
     //libera as alocacoes dos vetores e das matrizes
     cipurge();

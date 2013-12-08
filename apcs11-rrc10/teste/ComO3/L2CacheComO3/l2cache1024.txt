@@ -6,22 +6,22 @@ Measuring group L2CACHE
 -------------------------------------------------------------
 ./invmat -i matriz1024.txt -o output.txt
 +-----------------------+-------------+
-|         Event         |   core 0    |
+|         Event         |   core 1    |
 +-----------------------+-------------+
-|   INSTR_RETIRED_ANY   | 1.46847e+10 |
-| CPU_CLK_UNHALTED_CORE | 2.37932e+10 |
-| CPU_CLK_UNHALTED_REF  | 1.92452e+10 |
-| L2_TRANS_ALL_REQUESTS |  2.229e+09  |
-|     L2_RQSTS_MISS     | 2.81462e+08 |
+|   INSTR_RETIRED_ANY   | 1.46091e+10 |
+| CPU_CLK_UNHALTED_CORE | 2.38615e+10 |
+| CPU_CLK_UNHALTED_REF  | 1.92728e+10 |
+| L2_TRANS_ALL_REQUESTS | 2.0715e+09  |
+|     L2_RQSTS_MISS     | 2.84051e+08 |
 +-----------------------+-------------+
-+----------------------+----------+
-|        Metric        |  core 0  |
-+----------------------+----------+
-| Runtime (RDTSC) [s]  | 7.85244  |
-| Runtime unhalted [s] | 9.53898  |
-|     Clock [MHz]      | 3083.76  |
-|         CPI          | 1.62027  |
-|   L2 request rate    | 0.15179  |
-|     L2 miss rate     | 0.019167 |
-|    L2 miss ratio     | 0.126273 |
-+----------------------+----------+
++----------------------+-----------+
+|        Metric        |  core 1   |
++----------------------+-----------+
+| Runtime (RDTSC) [s]  |  7.85548  |
+| Runtime unhalted [s] |  9.56647  |
+|     Clock [MHz]      |  3088.15  |
+|         CPI          |  1.63333  |
+|   L2 request rate    | 0.141795  |
+|     L2 miss rate     | 0.0194434 |
+|    L2 miss ratio     | 0.137123  |
++----------------------+-----------+

@@ -4,24 +4,24 @@ CPU type:	Intel Core SandyBridge processor
 CPU clock:	2.49 GHz 
 Measuring group FLOPS_DP
 -------------------------------------------------------------
-./invmat -i matriz512.txt -o output.txt
+./invmat -i matriz256.txt -o output.txt
 +--------------------------------------+-------------+
-|                Event                 |   core 0    |
+|                Event                 |   core 1    |
 +--------------------------------------+-------------+
-|          INSTR_RETIRED_ANY           | 8.00396e+09 |
-|        CPU_CLK_UNHALTED_CORE         | 3.98535e+09 |
-|         CPU_CLK_UNHALTED_REF         | 3.24724e+09 |
+|          INSTR_RETIRED_ANY           | 1.14823e+09 |
+|        CPU_CLK_UNHALTED_CORE         | 5.65618e+08 |
+|         CPU_CLK_UNHALTED_REF         | 4.78249e+08 |
 | FP_COMP_OPS_EXE_SSE_FP_PACKED_DOUBLE |      0      |
-| FP_COMP_OPS_EXE_SSE_FP_SCALAR_DOUBLE | 3.70648e+08 |
+| FP_COMP_OPS_EXE_SSE_FP_SCALAR_DOUBLE | 4.62923e+07 |
 +--------------------------------------+-------------+
 +----------------------+----------+
-|        Metric        |  core 0  |
+|        Metric        |  core 1  |
 +----------------------+----------+
-| Runtime (RDTSC) [s]  | 1.33282  |
-| Runtime unhalted [s] | 1.59807  |
-|     Clock [MHz]      | 3060.71  |
-|         CPI          | 0.497922 |
-|       MFlops/s       | 278.093  |
+| Runtime (RDTSC) [s]  | 0.199933 |
+| Runtime unhalted [s] | 0.226762 |
+|     Clock [MHz]      |   2950   |
+|         CPI          | 0.492598 |
+|       MFlops/s       | 231.539  |
 |    Packed MUOPS/s    |    0     |
-|    Scalar MUOPS/s    | 278.093  |
+|    Scalar MUOPS/s    | 231.539  |
 +----------------------+----------+

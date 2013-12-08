@@ -1,0 +1,25 @@
+Matriz de tamanho 32:
+	Criacao da LU:0.000388 seg
+	Fatoração da LU:0.000695 seg
+	Refinamento:0.408026 seg
+
+Matriz de tamanho 64:
+	Criacao da LU:0.003189 seg
+	Fatoração da LU:0.003811 seg
+	Refinamento:3.049188 seg
+
+Matriz de tamanho 128:
+	Criacao da LU:0.006025 seg
+	Fatoração da LU:0.011339 seg
+	Refinamento:23.965818 seg
+
+Matriz de tamanho 256:
+	Criacao da LU:0.047082 seg
+	Fatoração da LU:0.088915 seg
+	Refinamento:205.126181 seg
+
+Matriz de tamanho 512:
+	Criacao da LU:0.379476 seg
+	Fatoração da LU:0.752532 seg
+	Refinamento:1965.983091 seg
+
